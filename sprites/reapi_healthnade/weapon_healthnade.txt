@@ -1,0 +1,4 @@
+3
+weapon			640 reapi_healthnade/640hud128	0	0 	170	45
+weapon_s		640 reapi_healthnade/640hud128	0	45	170	45
+ammo			640 reapi_healthnade/640hud128	170	 0	24	24
