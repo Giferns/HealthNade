@@ -62,8 +62,12 @@ new const WORLDMODEL[] = "models/reapi_healthnade/w_healthnade.mdl";
 new const SOUND_PULLPIN[] = "weapons/holywater_pinpul.wav";
 new const SOUND_DEPLOY[] = "weapons/holywater_deploy.wav";
 new const SOUND_DRINK[] = "weapons/holywater_drink.wav";
+new const SOUND_EXPLODE[] = "weapons/reapi_healthnade/heal.wav";
 
 #define rg_get_current_round() (get_member_game(m_iTotalRoundsPlayed) + 1)
+
+// copy_entvar(const iEntFrom, const iEntTo, const EntVar:iVar)
+#define copy_entvar(%1,%2,%3) set_entvar(%2, %3, get_entvar(%1, %3))
 
 new SpriteCylinder, SpriteExplode, SpriteShape;
 new MsgIdWeaponList, MsgIdAmmoPickup, MsgIdStatusIcon, MsgIdScreenFade;
@@ -350,7 +354,7 @@ public CBasePlayerWeapon_ItemPostFrame_Pre(weapon) {
 	// https://github.com/s1lentq/ReGameDLL_CS/blob/b979b5e84f36dc0eb870f97da670b700756217f1/regamedll/dlls/wpn_shared/wpn_smokegrenade.cpp#L225
 	set_member(weapon, m_flReleaseThrow, 0.1);
 
-	ExecuteHamB(Ham_TakeHealth, pPlayer, HEAL_AMOUNT_DRINK, DMG_GENERIC);
+	ExecuteHamB(Ham_TakeHealth, pPlayer, get_entvar(weapon, var_HealthNade_DrinkHealingAmount), DMG_GENERIC);
 	UTIL_ScreenFade(pPlayer);
 }
 
@@ -368,7 +372,7 @@ public CBasePlayer_ThrowGrenade_Pre(const id, const item, const Float:vecSrc[3],
 		return HC_CONTINUE;
 	}
 
-	new grenade = throwNade(id, vecSrc, vecThrow, time);
+	new grenade = throwNade(id, item, vecSrc, vecThrow, time);
 	SetHookChainReturn(ATYPE_INTEGER, grenade);
 	return HC_SUPERCEDE;
 }
@@ -406,6 +410,10 @@ giveNade(const id) {
 	set_member(item, m_Weapon_iSecondaryAmmoType, -1);
 
 	set_entvar(item, var_classname, ITEM_CLASSNAME);
+
+	set_entvar(item, var_HealthNade_Radius, HEAL_RADIUS);
+	set_entvar(item, var_HealthNade_ThrowHealingAmount, HEAL_AMOUNT_THROW);
+	set_entvar(item, var_HealthNade_DrinkHealingAmount, HEAL_AMOUNT_DRINK);
 
 	dllfunc(DLLFunc_Spawn, item);
 
@@ -447,7 +455,7 @@ giveAmmo(const id, const amount, const ammo, const max) {
 	emessage_end();
 }
 
-throwNade(const id, const Float:vecSrc[3], const Float:vecThrow[3], const Float:time) {
+throwNade(const id, const item, const Float:vecSrc[3], const Float:vecThrow[3], const Float:time) {
 	new grenade = rg_create_entity("info_target", false);
 	if (is_nullent(grenade)) {
 		return 0;
@@ -479,8 +487,11 @@ throwNade(const id, const Float:vecSrc[3], const Float:vecThrow[3], const Float:
 	set_entvar(grenade, var_gravity, 0.5);
 	set_entvar(grenade, var_friction, 0.8);
 	engfunc(EngFunc_SetModel, grenade, WORLDMODEL);
-	set_entvar(grenade, var_dmg, 30.0);
-	set_entvar(grenade, var_dmgtime, get_gametime() + time);
+	// set_entvar(grenade, var_dmg, 30.0);
+	// set_entvar(grenade, var_dmgtime, get_gametime() + time);
+
+	copy_entvar(item, grenade, var_HealthNade_Radius);
+	copy_entvar(item, grenade, var_HealthNade_ThrowHealingAmount);
 
 	SetTouch(grenade, "GrenadeTouch");
 	SetThink(grenade, "GrenadeThink");
@@ -491,11 +502,13 @@ explodeNade(const grenade) {
 	new Float:origin[3];
 	get_entvar(grenade, var_origin, origin);
 
-	UTIL_BeamCylinder(origin, SpriteCylinder, 1, 5, 30, 1, {10, 255, 40}, 255, 5, HEAL_RADIUS);
+	new Float:fRadius = get_entvar(grenade, var_HealthNade_Radius);
+
+	UTIL_BeamCylinder(origin, SpriteCylinder, 1, 5, 30, 1, {10, 255, 40}, 255, 5, fRadius);
 	UTIL_CreateExplosion(origin, 65.0, SpriteExplode, 30, 20, (TE_EXPLFLAG_NOSOUND | TE_EXPLFLAG_NOPARTICLES));
 	UTIL_SpriteTrail(origin, SpriteShape);
 
-	rh_emit_sound2(grenade, 0, CHAN_WEAPON, "weapons/reapi_healthnade/heal.wav", VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
+	rh_emit_sound2(grenade, 0, CHAN_WEAPON, SOUND_EXPLODE, VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
 
 	new id = get_entvar(grenade, var_owner);
 	new team = get_member(id, m_iTeam);
@@ -506,8 +519,8 @@ explodeNade(const grenade) {
 		}
 
 		get_entvar(player, var_origin, playerOrigin);
-		if (get_distance_f(origin, playerOrigin) < HEAL_RADIUS) {
-			ExecuteHamB(Ham_TakeHealth, player, HEAL_AMOUNT_THROW, DMG_GENERIC);
+		if (get_distance_f(origin, playerOrigin) < fRadius) {
+			ExecuteHamB(Ham_TakeHealth, player, get_entvar(grenade, var_HealthNade_ThrowHealingAmount), DMG_GENERIC);
 			UTIL_ScreenFade(player);
 		}
 	}
