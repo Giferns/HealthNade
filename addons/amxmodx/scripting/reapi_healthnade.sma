@@ -13,9 +13,11 @@
 		* Добавлена опция MIN_ROUND (минимальный раунд для автовыдачи по флагу)
 	0.0.5f:
 		* Добавлен натив HealthNade_GiveNade()
+	0.0.6f:
+		* Перенос параметров хилки в переменные сущности: https://github.com/Giferns/HealthNade/pull/1
 */
 
-new const PLUGIN_VERSION[] = "0.0.5f";
+new const PLUGIN_VERSION[] = "0.0.6f";
 
 #pragma semicolon 1
 
