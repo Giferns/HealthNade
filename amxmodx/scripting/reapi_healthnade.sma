@@ -27,6 +27,8 @@ new const PLUGIN_VERSION[] = "0.0.6f";
 #include <reapi>
 #include <healthnade>
 
+// TODO: Добавить квары вместо этих констант
+
 // Минимальный раунд для выдачи (сбрасывается при рестарте)
 const MIN_ROUND = 1;
 
@@ -65,6 +67,7 @@ new const SOUND_PULLPIN[] = "weapons/holywater_pinpul.wav";
 new const SOUND_DEPLOY[] = "weapons/holywater_deploy.wav";
 new const SOUND_DRINK[] = "weapons/holywater_drink.wav";
 new const SOUND_EXPLODE[] = "weapons/reapi_healthnade/heal.wav";
+// TODO: Вынести остальные пути в константы
 
 #define rg_get_current_round() (get_member_game(m_iTotalRoundsPlayed) + 1)
 
