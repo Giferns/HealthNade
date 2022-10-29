@@ -1,6 +1,8 @@
 /*
 	Форк лечебной гранаты на основе Healthnade 0.0.2 от F@nt0M: https://dev-cs.ru/resources/992/
 
+	GitHub: https://github.com/Giferns/HealthNade
+
 	0.0.3f:
 		* Добавлена возможность пить зелье на ПКМ (спасибо AnonymousAmx, MayroN, Psycrow)
 			* Опция HEAL_AMOUNT переименована в HEAL_AMOUNT_THROW
@@ -27,28 +29,21 @@ new const PLUGIN_VERSION[] = "0.0.6f";
 #include <reapi>
 #include <healthnade>
 
-// TODO: Добавить квары вместо этих констант
-
-// Минимальный раунд для выдачи (сбрасывается при рестарте)
-const MIN_ROUND = 1;
-
-// Радиус лечения
-const Float:HEAL_RADIUS = 300.0;
-
-// Объём лечения при броске
-const Float:HEAL_AMOUNT_THROW = 20.0;
-
-// Объём лечения при выпивании
-const Float:HEAL_AMOUNT_DRINK = 35.0;
+enum E_Cvars {
+	Float:Cvar_ExplodeRadius,
+	Float:Cvar_ThrowHealingAmount,
+	Float:Cvar_DrinkHealingAmount,
+	Cvar_Give_AccessFlags[16],
+	Cvar_Give_MinRound,
+}
+new gCvars[E_Cvars];
+#define Cvar(%1) gCvars[Cvar_%1]
 
 // Информирование по центру о функциях (закомментировать для отключения)
 new const USAGE_MSG[] = "ЛКМ - Бросить | ПКМ - Выпить";
 
 // Информирование по центру о невозможности выпить зелье (закомментировать для отключения)
 new const FULL_HP_MSG[] = "Вы полностью здоровы!";
-
-// Флаг автовыдачи при спавне (закомментировать для выдачи всем)
-const ACCESS_FLAG = ADMIN_LEVEL_H;
 
 const WeaponIdType:WEAPON_ID = WEAPON_SMOKEGRENADE;
 const WeaponIdType:WEAPON_NEW_ID = WEAPON_GLOCK;
@@ -82,6 +77,9 @@ new FwdRegUserMsg, MsgHookWeaponList;
 
 public plugin_precache() {
 	register_plugin("[ReAPI] Healthnade", PLUGIN_VERSION, "F@nt0M + mx?!");
+	// TODO: Добавить словарь
+
+	InitCvars();
 
 	precache_generic("sprites/reapi_healthnade/weapon_healthnade.txt");
 	precache_generic("sprites/reapi_healthnade/640hud128.spr");
@@ -187,17 +185,13 @@ public HookWeaponList(const msg_id, const msg_dest, const msg_entity) {
 #endif
 
 public CBasePlayer_OnSpawnEquip_Post(const id) {
-#if defined ACCESS_FLAG
-	if (~get_user_flags(id) & ACCESS_FLAG) {
+	if (!UserHasFlagsS(id, Cvar(Give_AccessFlags))) {
 		return;
 	}
-#endif
 
-#if defined MIN_ROUND
-	if(rg_get_current_round() < MIN_ROUND) {
+	if(rg_get_current_round() < Cvar(Give_MinRound)) {
 		return;
 	}
-#endif
 
 	giveNade(id);
 }
@@ -416,9 +410,9 @@ giveNade(const id) {
 
 	set_entvar(item, var_classname, ITEM_CLASSNAME);
 
-	set_entvar(item, var_HealthNade_Radius, HEAL_RADIUS);
-	set_entvar(item, var_HealthNade_ThrowHealingAmount, HEAL_AMOUNT_THROW);
-	set_entvar(item, var_HealthNade_DrinkHealingAmount, HEAL_AMOUNT_DRINK);
+	set_entvar(item, var_HealthNade_Radius, Cvar(ExplodeRadius));
+	set_entvar(item, var_HealthNade_ThrowHealingAmount, Cvar(ThrowHealingAmount));
+	set_entvar(item, var_HealthNade_DrinkHealingAmount,  Cvar(DrinkHealingAmount));
 
 	dllfunc(DLLFunc_Spawn, item);
 
@@ -492,8 +486,6 @@ throwNade(const id, const item, const Float:vecSrc[3], const Float:vecThrow[3], 
 	set_entvar(grenade, var_gravity, 0.5);
 	set_entvar(grenade, var_friction, 0.8);
 	engfunc(EngFunc_SetModel, grenade, WORLDMODEL);
-	// set_entvar(grenade, var_dmg, 30.0);
-	// set_entvar(grenade, var_dmgtime, get_gametime() + time);
 
 	copy_entvar(item, grenade, var_HealthNade_Radius);
 	copy_entvar(item, grenade, var_HealthNade_ThrowHealingAmount);
@@ -537,6 +529,39 @@ destroyNade(const grenade) {
 	SetTouch(grenade, "");
 	SetThink(grenade, "");
 	set_entvar(grenade, var_flags, FL_KILLME);
+}
+
+InitCvars() {
+	bind_pcvar_float(create_cvar(
+		"HealthNade_ExplodeRadius", "300.0", FCVAR_NONE,
+		"Радиус взрыва гранаты.",
+		true, 1.0
+	), Cvar(ExplodeRadius));
+
+	bind_pcvar_float(create_cvar(
+		"HealthNade_ThrowHealingAmount", "20.0", FCVAR_NONE,
+		"Кол-во ХП, восполняемое от взрыва гранаты."
+	), Cvar(ThrowHealingAmount));
+
+	bind_pcvar_float(create_cvar(
+		"HealthNade_DrinkHealingAmount", "35.0", FCVAR_NONE,
+		"Кол-во ХП, восполняемое от выпивания гранаты."
+	), Cvar(DrinkHealingAmount));
+
+	bind_pcvar_string(create_cvar(
+		"HealthNade_Give_AccessFlags", "t", FCVAR_NONE,
+		"Флаги доступа для получения гранаты при спавне. Оставить пустым, чтобы выдавать всем."
+	), Cvar(Give_AccessFlags), charsmax(Cvar(Give_AccessFlags)));
+
+	bind_pcvar_num(create_cvar(
+		"HealthNade_Give_MinRound", "1", FCVAR_NONE,
+		"С какого раунда будет выдаваться граната.",
+		true, 1.0
+	), Cvar(Give_MinRound));
+
+	// TODO: Сунуть описания кваров в словарь
+
+	AutoExecConfig(true, "HealthNade");
 }
 
 stock rg_get_player_item(const id, const classname[], const InventorySlotType:slot = NONE_SLOT) {
@@ -665,6 +690,19 @@ stock UTIL_SpriteTrail(Float:origin[3], const sprite, const cound = 20, const li
 
 stock FixedUnsigned16(Float:value, scale = (1 << 12)) {
 	return clamp(floatround(value * scale), 0, 0xFFFF);
+}
+
+bool:UserHasFlagsS(const UserId, const sFlags[], const bool:bStrict = false) {
+	if (!sFlags[0]) {
+		return true;
+	}
+
+	new iFlags = read_flags(sFlags);
+	new iUserFlags = get_user_flags(UserId);
+	
+	return bStrict
+		? (iUserFlags & iFlags) == iFlags
+		: (iUserFlags & iFlags) > 0;
 }
 
 public plugin_natives() {
