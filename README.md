@@ -21,6 +21,15 @@ HealthNade_Give_AccessFlags "t"
 
 // С какого раунда будет выдаваться граната.
 HealthNade_Give_MinRound "1"
+
+// Выдавать ли хилку при спавне.
+HealthNade_Give "0"
+
+// Показывать подсказку по использованию гранаты.
+HealthNade_Msg_UsageHint "1"
+
+// Показывать сообщение при попытке вылечиться с полным ХП.
+HealthNade_Msg_FullHp "1"
 ```
 
 ## Благодарности
