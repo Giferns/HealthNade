@@ -33,17 +33,18 @@ enum E_Cvars {
 	Float:Cvar_ExplodeRadius,
 	Float:Cvar_ThrowHealingAmount,
 	Float:Cvar_DrinkHealingAmount,
+	bool:Cvar_Give,
 	Cvar_Give_AccessFlags[16],
 	Cvar_Give_MinRound,
+	bool:Cvar_Msg_FullHp,
+	bool:Cvar_Msg_UsageHint,
 }
 new gCvars[E_Cvars];
 #define Cvar(%1) gCvars[Cvar_%1]
 
-// Информирование по центру о функциях (закомментировать для отключения)
-new const USAGE_MSG[] = "ЛКМ - Бросить | ПКМ - Выпить";
+new const DICTIONARY_FILENAME[] = "HealthNade.ini";
 
-// Информирование по центру о невозможности выпить зелье (закомментировать для отключения)
-new const FULL_HP_MSG[] = "Вы полностью здоровы!";
+#define LangS(%1) fmt("%l", %1)
 
 const WeaponIdType:WEAPON_ID = WEAPON_SMOKEGRENADE;
 const WeaponIdType:WEAPON_NEW_ID = WEAPON_GLOCK;
@@ -76,8 +77,8 @@ new FwdRegUserMsg, MsgHookWeaponList;
 #endif
 
 public plugin_precache() {
-	register_plugin("[ReAPI] Healthnade", PLUGIN_VERSION, "F@nt0M + mx?!");
-	// TODO: Добавить словарь
+	register_plugin("[ReAPI] Healthnade", PLUGIN_VERSION, "F@nt0M + mx?! + ArKaNeMaN");
+	register_dictionary(DICTIONARY_FILENAME);
 
 	InitCvars();
 
@@ -228,12 +229,15 @@ public CBasePlayer_GiveAmmo_Pre(const id, const amount, const name[]) {
 
 
 public CBasePlayerWeapon_DefaultDeploy_Pre(const item, const szViewModel[], const szWeaponModel[], const iAnim, const szAnimExt[], const skiplocal) {
+	new UserId = get_member(item, m_pPlayer);
+
 	if (FClassnameIs(item, ITEM_CLASSNAME)) {
 		SetHookChainArg(2, ATYPE_STRING, VIEWMODEL);
 		SetHookChainArg(3, ATYPE_STRING, WEAPONMODEL);
-	#if defined USAGE_MSG
-		client_print(get_member(item, m_pPlayer), print_center, USAGE_MSG);
-	#endif
+		
+		if (Cvar(Msg_UsageHint)) {
+			client_print(UserId, print_center, "%L", UserId, "HEALTHNADE_USAGE_HINT");
+		}
 	}
 
 	new WeaponIdType:wid = WeaponIdType:rg_get_iteminfo(item, ItemInfo_iId);
@@ -241,7 +245,7 @@ public CBasePlayerWeapon_DefaultDeploy_Pre(const item, const szViewModel[], cons
 		return HC_CONTINUE;
 	}
 
-	new lastItem = get_member(get_member(item, m_pPlayer), m_pLastItem);
+	new lastItem = get_member(UserId, m_pLastItem);
 	if (is_nullent(lastItem) || item == lastItem) {
 		return HC_CONTINUE;
 	}
@@ -305,9 +309,10 @@ public CBasePlayerWeapon_SecondaryAttack_Post(weapon) {
 	}
 
 	if(Float:get_entvar(pPlayer, var_health) >= Float:get_entvar(pPlayer, var_max_health)) {
-	#if defined FULL_HP_MSG
-		client_print(pPlayer, print_center, FULL_HP_MSG);
-	#endif
+		if (Cvar(Msg_FullHp)) {
+			client_print(pPlayer, print_center, "%L", pPlayer, "HEALTHNADE_FULL_HP");
+		}
+
 		return;
 	}
 
@@ -534,32 +539,47 @@ destroyNade(const grenade) {
 InitCvars() {
 	bind_pcvar_float(create_cvar(
 		"HealthNade_ExplodeRadius", "300.0", FCVAR_NONE,
-		"Радиус взрыва гранаты.",
+		LangS("HEALTHNADE_CVAR_EXPLODE_RADIUS"),
 		true, 1.0
 	), Cvar(ExplodeRadius));
 
 	bind_pcvar_float(create_cvar(
 		"HealthNade_ThrowHealingAmount", "20.0", FCVAR_NONE,
-		"Кол-во ХП, восполняемое от взрыва гранаты."
+		LangS("HEALTHNADE_CVAR_THROW_HEALING_AMOUNT")
 	), Cvar(ThrowHealingAmount));
 
 	bind_pcvar_float(create_cvar(
 		"HealthNade_DrinkHealingAmount", "35.0", FCVAR_NONE,
-		"Кол-во ХП, восполняемое от выпивания гранаты."
+		LangS("HEALTHNADE_CVAR_DRINK_HEALING_AMOUNT")
 	), Cvar(DrinkHealingAmount));
+
+	bind_pcvar_num(create_cvar(
+		"HealthNade_Give", "0", FCVAR_NONE,
+		LangS("HEALTHNADE_CVAR_GIVE")
+	), Cvar(Give));
 
 	bind_pcvar_string(create_cvar(
 		"HealthNade_Give_AccessFlags", "t", FCVAR_NONE,
-		"Флаги доступа для получения гранаты при спавне. Оставить пустым, чтобы выдавать всем."
+		LangS("HEALTHNADE_CVAR_GIVE_ACCESS_FLAGS")
 	), Cvar(Give_AccessFlags), charsmax(Cvar(Give_AccessFlags)));
 
 	bind_pcvar_num(create_cvar(
 		"HealthNade_Give_MinRound", "1", FCVAR_NONE,
-		"С какого раунда будет выдаваться граната.",
+		LangS("HEALTHNADE_CVAR_GIVE_MIN_ROUND"),
 		true, 1.0
 	), Cvar(Give_MinRound));
 
-	// TODO: Сунуть описания кваров в словарь
+	bind_pcvar_num(create_cvar(
+		"HealthNade_Msg_UsageHint", "1", FCVAR_NONE,
+		LangS("HEALTHNADE_CVAR_MSG_USAGE_HINT"),
+		true, 0.0, true, 1.0
+	), Cvar(Msg_UsageHint));
+
+	bind_pcvar_num(create_cvar(
+		"HealthNade_Msg_FullHp", "1", FCVAR_NONE,
+		LangS("HEALTHNADE_CVAR_MSG_FULL_HP"),
+		true, 0.0, true, 1.0
+	), Cvar(Msg_FullHp));
 
 	AutoExecConfig(true, "HealthNade");
 }
