@@ -17,9 +17,11 @@
 		* Добавлен натив HealthNade_GiveNade()
 	0.0.6f:
 		* Перенос параметров хилки в переменные сущности: https://github.com/Giferns/HealthNade/pull/1
+	0.0.7f:
+		* Добавлены квары и словарь
 */
 
-new const PLUGIN_VERSION[] = "0.0.6f";
+new const PLUGIN_VERSION[] = "0.0.7f";
 
 #pragma semicolon 1
 
@@ -234,7 +236,7 @@ public CBasePlayerWeapon_DefaultDeploy_Pre(const item, const szViewModel[], cons
 	if (FClassnameIs(item, ITEM_CLASSNAME)) {
 		SetHookChainArg(2, ATYPE_STRING, VIEWMODEL);
 		SetHookChainArg(3, ATYPE_STRING, WEAPONMODEL);
-		
+
 		if (Cvar(Msg_UsageHint)) {
 			client_print(UserId, print_center, "%L", UserId, "HEALTHNADE_USAGE_HINT");
 		}
@@ -719,7 +721,7 @@ bool:UserHasFlagsS(const UserId, const sFlags[], const bool:bStrict = false) {
 
 	new iFlags = read_flags(sFlags);
 	new iUserFlags = get_user_flags(UserId);
-	
+
 	return bStrict
 		? (iUserFlags & iFlags) == iFlags
 		: (iUserFlags & iFlags) > 0;
