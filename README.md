@@ -37,3 +37,4 @@ HealthNade_Msg_FullHp "1"
 - **fantom** - за исходный плагин [Healthnade](https://dev-cs.ru/resources/992/);
 - **AnonymousAmx**, **MayroN**, **Psycrow** - за [модельку гранаты с анимацией](https://dev-cs.ru/threads/18355/);
 - **steelzzz**, **wopox1337** - за стоки эффектов.
+- **[RedFoxxx](https://dev-cs.ru/members/8560/)** - за перевод на англ.
