@@ -31,6 +31,12 @@ new const PLUGIN_VERSION[] = "0.0.7f";
 #include <reapi>
 #include <healthnade>
 
+enum E_NadeDropType {
+	NadeDrop_Off = 0,
+	NadeDrop_On = 1,
+	NadeDrop_ByCvar = 2,
+}
+
 enum E_Cvars {
 	Float:Cvar_ExplodeRadius,
 	Float:Cvar_ThrowHealingAmount,
@@ -40,6 +46,7 @@ enum E_Cvars {
 	Cvar_Give_MinRound,
 	bool:Cvar_Msg_FullHp,
 	bool:Cvar_Msg_UsageHint,
+	E_NadeDropType:Cvar_NadeDrop,
 }
 new gCvars[E_Cvars];
 #define Cvar(%1) gCvars[Cvar_%1]
@@ -77,6 +84,7 @@ new MsgIdWeaponList, MsgIdAmmoPickup, MsgIdStatusIcon, MsgIdScreenFade;
 #if WEAPON_NEW_ID != WEAPON_GLOCK
 new FwdRegUserMsg, MsgHookWeaponList;
 #endif
+new g_iCvarNadeDrops;
 
 public plugin_precache() {
 	register_plugin("[ReAPI] Healthnade", PLUGIN_VERSION, "F@nt0M + mx?! + ArKaNeMaN");
@@ -115,6 +123,7 @@ public plugin_init() {
 	register_clcmd(WEAPON_NEW_NAME, "CmdSelect");
 
 	RegisterHookChain(RG_CBasePlayer_OnSpawnEquip, "CBasePlayer_OnSpawnEquip_Post", true);
+	RegisterHookChain(RG_CBasePlayer_Killed, "CBasePlayer_Killed_Pre", false);
 
 	RegisterHookChain(RG_CSGameRules_CleanUpMap, "CSGameRules_CleanUpMap_Post", true);
 	RegisterHookChain(RG_CBasePlayer_GiveAmmo, "CBasePlayer_GiveAmmo_Pre", false);
@@ -199,6 +208,66 @@ public CBasePlayer_OnSpawnEquip_Post(const id) {
 	giveNade(id);
 }
 
+public CBasePlayer_Killed_Pre(const id) {
+	if (Cvar(NadeDrop) == NadeDrop_Off) {
+		return;
+	}
+
+	if (Cvar(NadeDrop) == NadeDrop_ByCvar) {
+		switch (g_iCvarNadeDrops) {
+			case 0:
+				return;
+			case 1: {
+				new iItem = get_member(id, m_rgpPlayerItems, GRENADE_SLOT);
+
+				if (is_nullent(iItem) || !FClassnameIs(iItem, ITEM_CLASSNAME)) {
+					return;
+				}
+			}
+		}
+	}
+
+	if (!get_member(id, m_rgAmmo, AMMO_ID)) {
+		return;
+	}
+
+	static const Float:flShiftSpawnEntOrigin = 50.0; // рандомное смещение по координатам
+
+	new eEnt, Float:fOrigin[3];
+
+	get_entvar(id, var_origin, fOrigin);
+
+	fOrigin[0] += random_float(-flShiftSpawnEntOrigin, flShiftSpawnEntOrigin);
+	fOrigin[1] += random_float(-flShiftSpawnEntOrigin, flShiftSpawnEntOrigin);
+
+	eEnt = rg_create_entity("info_target");
+
+	engfunc(EngFunc_SetModel, eEnt, WORLDMODEL);
+	engfunc(EngFunc_SetOrigin, eEnt, fOrigin);
+	engfunc(EngFunc_SetSize, eEnt, Float:{-1.0, -1.0, -1.0}, Float:{1.0, 1.0, 1.0});
+
+	set_entvar(eEnt, var_classname, "healthnade_drop");
+	set_entvar(eEnt, var_movetype, MOVETYPE_TOSS);
+	set_entvar(eEnt, var_solid, SOLID_TRIGGER);
+
+	SetTouch(eEnt, "touch_healthnade_drop");
+}
+
+public touch_healthnade_drop(const eEnt, const id) {
+	if (
+		is_nullent(eEnt)
+		|| !is_user_connected(id)
+		|| get_member(id, m_rgAmmo, AMMO_ID)
+	) {
+		return;
+	}
+
+	set_entvar(eEnt, var_nextthink, -1.0);
+	set_entvar(eEnt, var_flags, FL_KILLME);
+
+	giveNade(id);
+}
+
 public CmdSelect(const id) {
 	if (!is_user_alive(id)) {
 		return PLUGIN_HANDLED;
@@ -216,6 +285,12 @@ public CSGameRules_CleanUpMap_Post() {
 	while (ent > 0) {
 		destroyNade(ent);
 		ent = rg_find_ent_by_class(ent, GRENADE_CLASSNAME, false);
+	}
+
+	ent = rg_find_ent_by_class(NULLENT, "healthnade_drop", false);
+	while (ent > 0) {
+		destroyNade(ent);
+		ent = rg_find_ent_by_class(ent, "healthnade_drop", false);
 	}
 }
 
@@ -583,7 +658,20 @@ InitCvars() {
 		true, 0.0, true, 1.0
 	), Cvar(Msg_FullHp));
 
+	bind_pcvar_num(create_cvar(
+		"HealthNade_NadeDrop", "2", FCVAR_NONE,
+		LangS("HEALTHNADE_CVAR_NADE_DROP"),
+		true, 0.0, true, 2.0
+	), Cvar(NadeDrop));
+
 	AutoExecConfig(true, "HealthNade");
+
+	set_task(4.0, "OnConfigsExecuted_Ex");
+}
+
+public OnConfigsExecuted_Ex() {
+	// TODO: Надо бы как-то по нормальному сделать...
+	g_iCvarNadeDrops = get_cvar_num("mp_nadedrops");
 }
 
 stock rg_get_player_item(const id, const classname[], const InventorySlotType:slot = NONE_SLOT) {
