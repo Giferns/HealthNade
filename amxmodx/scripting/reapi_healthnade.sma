@@ -666,12 +666,7 @@ InitCvars() {
 
 	AutoExecConfig(true, "HealthNade");
 
-	set_task(4.0, "OnConfigsExecuted_Ex");
-}
-
-public OnConfigsExecuted_Ex() {
-	// TODO: Надо бы как-то по нормальному сделать...
-	g_iCvarNadeDrops = get_cvar_num("mp_nadedrops");
+	bind_pcvar_num(get_cvar_pointer("mp_nadedrops"), g_iCvarNadeDrops);
 }
 
 stock rg_get_player_item(const id, const classname[], const InventorySlotType:slot = NONE_SLOT) {
