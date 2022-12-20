@@ -29,6 +29,7 @@ new const PLUGIN_VERSION[] = "0.0.7f";
 #include <fakemeta>
 #include <hamsandwich>
 #include <reapi>
+#include <xs>
 #include <healthnade>
 
 enum E_NadeDropType {
@@ -231,26 +232,39 @@ public CBasePlayer_Killed_Pre(const id) {
 		return;
 	}
 
-	static const Float:flShiftSpawnEntOrigin = 50.0; // рандомное смещение по координатам
-
 	new eEnt, Float:fOrigin[3];
 
 	get_entvar(id, var_origin, fOrigin);
 
-	fOrigin[0] += random_float(-flShiftSpawnEntOrigin, flShiftSpawnEntOrigin);
-	fOrigin[1] += random_float(-flShiftSpawnEntOrigin, flShiftSpawnEntOrigin);
+	new Float:fVelocity[3];
+	get_entvar(id, var_velocity, fVelocity);
+	xs_vec_mul_scalar(fVelocity, 0.75, fVelocity);
 
 	eEnt = rg_create_entity("info_target");
 
-	engfunc(EngFunc_SetModel, eEnt, WORLDMODEL);
-	engfunc(EngFunc_SetOrigin, eEnt, fOrigin);
-	engfunc(EngFunc_SetSize, eEnt, Float:{-1.0, -1.0, -1.0}, Float:{1.0, 1.0, 1.0});
+	if(is_nullent(eEnt)) {
+		return;
+	}
 
 	set_entvar(eEnt, var_classname, "healthnade_drop");
+
+	engfunc(EngFunc_SetOrigin, eEnt, fOrigin);
 	set_entvar(eEnt, var_movetype, MOVETYPE_TOSS);
 	set_entvar(eEnt, var_solid, SOLID_TRIGGER);
+	engfunc(EngFunc_SetModel, eEnt, WORLDMODEL);
+	engfunc(EngFunc_SetSize, eEnt, Float:{-6.0, -6.0, -1.0}, Float:{6.0, 6.0, 1.0});
+
+	set_entvar(eEnt, var_velocity, fVelocity);
+	SetThink(eEnt, "think_healthnade_drop");
+	set_entvar(eEnt, var_nextthink, get_gametime() + get_cvar_float("mp_item_staytime"));
 
 	SetTouch(eEnt, "touch_healthnade_drop");
+}
+
+public think_healthnade_drop(const eEnt) {
+	if(is_entity(eEnt)) {
+		set_entvar(eEnt, var_flags, FL_KILLME);
+	}
 }
 
 public touch_healthnade_drop(const eEnt, const id) {
