@@ -93,7 +93,7 @@ new FwdRegUserMsg, MsgHookWeaponList;
 new g_iCvarNadeDrops;
 
 public plugin_precache() {
-	register_plugin("[ReAPI] Healthnade", PLUGIN_VERSION, "F@nt0M + mx?! + ArKaNeMaN");
+	register_plugin("[ReAPI] Healthnade", PLUGIN_VERSION, "DEV-CS.RU Community");
 	register_dictionary(DICTIONARY_FILENAME);
 
 	InitCvars();
