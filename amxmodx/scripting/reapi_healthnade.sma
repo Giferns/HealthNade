@@ -197,7 +197,7 @@ public HookWeaponList(const msg_id, const msg_dest, const msg_entity) {
 #endif
 
 public CBasePlayer_OnSpawnEquip_Post(const id) {
-	if (!UserHasFlagsS(id, Cvar(Give_AccessFlags))) {
+	if (!Cvar(Give) || !UserHasFlagsS(id, Cvar(Give_AccessFlags))) {
 		return;
 	}
 
