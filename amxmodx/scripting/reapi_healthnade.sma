@@ -19,9 +19,14 @@
 		* Перенос параметров хилки в переменные сущности: https://github.com/Giferns/HealthNade/pull/1
 	0.0.7f:
 		* Добавлены квары и словарь
+	0.0.8f:
+		* Фикс учёта mp_nadedrops (теперь учитывает значение на лету)
+		* Добавлен недостающий учёт квара HealthNade_Give
+		* Значение квара HealthNade_Give по-умолчанию теперь 1 (было 0)
+		* Исправлена логика создания кастомного веапонбокса
 */
 
-new const PLUGIN_VERSION[] = "0.0.7f";
+new const PLUGIN_VERSION[] = "0.0.8f";
 
 #pragma semicolon 1
 
