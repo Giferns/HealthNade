@@ -631,7 +631,7 @@ InitCvars() {
 	), Cvar(DrinkHealingAmount));
 
 	bind_pcvar_num(create_cvar(
-		"HealthNade_Give", "0", FCVAR_NONE,
+		"HealthNade_Give", "1", FCVAR_NONE,
 		LangS("HEALTHNADE_CVAR_GIVE")
 	), Cvar(Give));
 
