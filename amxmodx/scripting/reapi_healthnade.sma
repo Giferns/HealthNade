@@ -53,6 +53,7 @@ enum E_Cvars {
 	bool:Cvar_Msg_FullHp,
 	bool:Cvar_Msg_UsageHint,
 	E_NadeDropType:Cvar_NadeDrop,
+	InventorySlotType:Cvar_SlotId,
 }
 new gCvars[E_Cvars];
 #define Cvar(%1) gCvars[Cvar_%1]
@@ -70,6 +71,7 @@ new const WEAPON_NEW_NAME[] = "reapi_healthnade/weapon_healthnade";
 new const ITEM_CLASSNAME[] = "weapon_healthnade";
 new const GRENADE_CLASSNAME[] = "healthnade";
 const AMMO_ID = 16;
+const InventorySlotType:ITEM_SLOT = GRENADE_SLOT;
 
 new const VIEWMODEL[] = "models/reapi_healthnade/v_drink9.mdl";
 new const WEAPONMODEL[] = "models/reapi_healthnade/p_healthnade.mdl";
@@ -153,7 +155,7 @@ public plugin_init() {
 		MSG_INIT, 0,
 		WEAPON_NEW_NAME,
 		AMMO_ID, 1,
-		-1, -1, GRENADE_SLOT, 4, WEAPON_NEW_ID,
+		-1, -1, Cvar(SlotId), 4, WEAPON_NEW_ID,
 		ITEM_FLAG_LIMITINWORLD | ITEM_FLAG_EXHAUSTIBLE
 	);
 #else
@@ -194,7 +196,7 @@ public HookWeaponList(const msg_id, const msg_dest, const msg_entity) {
 	set_msg_arg_int(arg_ammo1_max, ARG_BYTE, 1);
 	set_msg_arg_int(arg_ammo2, ARG_BYTE, -1);
 	set_msg_arg_int(arg_ammo2_max, ARG_BYTE, -1);
-	set_msg_arg_int(arg_slot, ARG_BYTE, _:GRENADE_SLOT - 1);
+	set_msg_arg_int(arg_slot, ARG_BYTE, _:Cvar(SlotId) - 1);
 	set_msg_arg_int(arg_position, ARG_BYTE, 4);
 	set_msg_arg_int(arg_flags, ARG_BYTE, ITEM_FLAG_LIMITINWORLD | ITEM_FLAG_EXHAUSTIBLE);
 
@@ -224,7 +226,7 @@ public CBasePlayer_Killed_Pre(const id) {
 			case 0:
 				return;
 			case 1: {
-				new iItem = get_member(id, m_rgpPlayerItems, GRENADE_SLOT);
+				new iItem = get_member(id, m_rgpPlayerItems, ITEM_SLOT);
 
 				if (is_nullent(iItem) || !FClassnameIs(iItem, ITEM_CLASSNAME)) {
 					return;
@@ -292,7 +294,7 @@ public CmdSelect(const id) {
 		return PLUGIN_HANDLED;
 	}
 
-	new item = rg_get_player_item(id, ITEM_CLASSNAME, GRENADE_SLOT);
+	new item = rg_get_player_item(id, ITEM_CLASSNAME, ITEM_SLOT);
 	if (item != 0 && get_member(id, m_pActiveItem) != item) {
 		rg_switch_weapon(id, item);
 	}
@@ -358,7 +360,7 @@ public Item_Deploy_Post(const item) {
 		rg_set_iteminfo(item, ItemInfo_iId, WEAPON_ID);
 	}
 
-	new other = get_member(get_member(item, m_pPlayer), m_rgpPlayerItems, GRENADE_SLOT);
+	new other = get_member(get_member(item, m_pPlayer), m_rgpPlayerItems, ITEM_SLOT);
 	while (!is_nullent(other)) {
 		if (item != other && WeaponIdType:rg_get_iteminfo(other, ItemInfo_iId) == WEAPON_ID) {
 			rg_set_iteminfo(other, ItemInfo_iId, WEAPON_FAKE_ID);
@@ -368,7 +370,7 @@ public Item_Deploy_Post(const item) {
 }
 
 public Item_Holster_Post(const item) {
-	new other = get_member(get_member(item, m_pPlayer), m_rgpPlayerItems, GRENADE_SLOT);
+	new other = get_member(get_member(item, m_pPlayer), m_rgpPlayerItems, ITEM_SLOT);
 	while (!is_nullent(other)) {
 		if (item != other && WeaponIdType:rg_get_iteminfo(other, ItemInfo_iId) == WEAPON_FAKE_ID) {
 			rg_set_iteminfo(other, ItemInfo_iId, WEAPON_ID);
@@ -490,7 +492,7 @@ public GrenadeThink(const grenade) {
 }
 
 giveNade(const id) {
-	new item = rg_get_player_item(id, ITEM_CLASSNAME, GRENADE_SLOT);
+	new item = rg_get_player_item(id, ITEM_CLASSNAME, ITEM_SLOT);
 	if (item != 0) {
 		giveAmmo(id, 1, AMMO_ID, 1);
 		return item;
@@ -524,6 +526,7 @@ giveNade(const id) {
 	rg_set_iteminfo(item, ItemInfo_iMaxAmmo1, 1);
 	rg_set_iteminfo(item, ItemInfo_iId, WEAPON_FAKE_ID);
 	rg_set_iteminfo(item, ItemInfo_iPosition, 4);
+	rg_set_iteminfo(item, ItemInfo_iWeight, 1);
 	rg_set_iteminfo(item, ItemInfo_iWeight, 1);
 
 	dllfunc(DLLFunc_Touch, item, id);
@@ -682,6 +685,12 @@ InitCvars() {
 		LangS("HEALTHNADE_CVAR_NADE_DROP"),
 		true, 0.0, true, 2.0
 	), Cvar(NadeDrop));
+
+	bind_pcvar_num(create_cvar(
+		"HealthNade_SlotId", "4", FCVAR_NONE,
+		LangS("HEALTHNADE_CVAR_SLOT_ID"),
+		true, 1.0, true, 5.0
+	), Cvar(SlotId));
 
 	AutoExecConfig(true, "HealthNade");
 
