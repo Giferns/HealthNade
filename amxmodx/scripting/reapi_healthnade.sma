@@ -24,9 +24,11 @@
 		* Добавлен недостающий учёт квара HealthNade_Give
 		* Значение квара HealthNade_Give по-умолчанию теперь 1 (было 0)
 		* Исправлена логика создания кастомного веапонбокса
+	0.0.9f:
+		* Добавлен квар HealthNade_SlotId
 */
 
-new const PLUGIN_VERSION[] = "0.0.8f";
+new const PLUGIN_VERSION[] = "0.0.9f";
 
 #pragma semicolon 1
 
