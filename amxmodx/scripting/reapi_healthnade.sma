@@ -527,7 +527,6 @@ giveNade(const id) {
 	rg_set_iteminfo(item, ItemInfo_iId, WEAPON_FAKE_ID);
 	rg_set_iteminfo(item, ItemInfo_iPosition, 4);
 	rg_set_iteminfo(item, ItemInfo_iWeight, 1);
-	rg_set_iteminfo(item, ItemInfo_iWeight, 1);
 
 	dllfunc(DLLFunc_Touch, item, id);
 
