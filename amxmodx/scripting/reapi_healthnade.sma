@@ -622,8 +622,8 @@ explodeNade(const grenade) {
 
 		get_entvar(player, var_origin, playerOrigin);
 		if (get_distance_f(origin, playerOrigin) < fRadius) {
-			ExecuteHamB(Ham_TakeHealth, player, get_entvar(grenade, var_HealthNade_ThrowHealingAmount), DMG_GENERIC);
-			UTIL_ScreenFade(player);
+			if (ExecuteHamB(Ham_TakeHealth, player, get_entvar(grenade, var_HealthNade_ThrowHealingAmount), DMG_GENERIC))
+				UTIL_ScreenFade(player);
 		}
 	}
 
