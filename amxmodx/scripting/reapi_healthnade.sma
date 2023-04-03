@@ -39,6 +39,77 @@ new const PLUGIN_VERSION[] = "0.0.9f";
 #include <xs>
 #include <healthnade>
 
+enum RadiusHeal_Func {
+	/**
+	* На любом расстоянии урон будет максимальным.
+	* 
+	* fFuncVar определяет множитель урона на любом расстоянии.
+	* По умолчанию = 1.0
+	*/
+	RadiusHeal_Static,
+
+	/**
+	* Урон будет линейно зависеть от расстояния.
+	* Т.е. на сколько дальше, на столько меньше урона.
+	* 
+	* fFuncVar определяет множитель параметра функции.
+	* По умолчанию = 1.0
+	*/
+	RadiusHeal_Linear,
+	
+	/**
+	* Расстояние возводится в степень.
+	* Ближе к центру урон падает медленнее.
+	* 
+	* fFuncVar определяет показатель степени.
+	* По умолчанию = 2.0
+	*/
+	RadiusHeal_Sqr,
+	
+	/**
+	* Берётся корень от расстояния.
+	* Ближе к центру урон падает быстрее.
+	* 
+	* fFuncVar определяет показатель корня.
+	* По умолчанию = 2.0
+	*/
+	RadiusHeal_Sqrt,
+	
+	/**
+	* Дальше от центра урон падает быстрее.
+	*/
+	RadiusHeal_Sin,
+	
+	/**
+	* Ближе к середине радиуса урон падает медленнее.
+	* На самом деле, получается близко к линейному.
+	*/
+	RadiusHeal_Tan,
+	
+	/**
+	* От центра сначала падает быстрее, потом замедляется.
+	* На середине радиуса совпадает с линейной.
+	*/
+	RadiusHeal_Arcsin,
+}
+
+enum RadiusHeal_InnerRadiusBehavior {
+	/**
+	* Расстояние считается от внутреннего радиуса, а не от центра.
+	*/
+	RadiusHeal_OffsetX,
+
+	/**
+	* Множитель урона вычисляется от фактического расстояния + внутреннего радиуса, но не больше общего радиуса.
+	*/
+	RadiusHeal_OffsetFx,
+
+	/**
+	* Если игрок вне внутреннего радиуса, множитель урона вычисляется от фактического расстояния.
+	*/
+	RadiusHeal_Overlay,
+}
+
 enum E_NadeDropType {
 	NadeDrop_Off = 0,
 	NadeDrop_On = 1,
@@ -56,6 +127,8 @@ enum E_Cvars {
 	bool:Cvar_Msg_UsageHint,
 	E_NadeDropType:Cvar_NadeDrop,
 	InventorySlotType:Cvar_SlotId,
+
+	bool:Cvar_NewRadiusFunc_Use,
 }
 new gCvars[E_Cvars];
 #define Cvar(%1) gCvars[Cvar_%1]
@@ -382,11 +455,11 @@ public Item_Holster_Post(const item) {
 }
 
 enum {
-    HG_ANIMATION_IDLE = 0,
-    HG_ANIMATION_PULLPIN,
-    HG_ANIMATION_THROW,
+	HG_ANIMATION_IDLE = 0,
+	HG_ANIMATION_PULLPIN,
+	HG_ANIMATION_THROW,
 	HG_ANIMATION_DEPLOY,
-    HG_ANIMATION_DRINK
+	HG_ANIMATION_DRINK
 };
 
 public CBasePlayerWeapon_SecondaryAttack_Post(weapon) {
@@ -463,12 +536,12 @@ public CBasePlayerWeapon_ItemPostFrame_Pre(weapon) {
 }
 
 stock SendWeaponAnimation(const id, const iAnimation) {
-    set_entvar(id, var_weaponanim, iAnimation);
+	set_entvar(id, var_weaponanim, iAnimation);
 
-    message_begin(MSG_ONE_UNRELIABLE, SVC_WEAPONANIM, .player = id);
-    write_byte(iAnimation);
-    write_byte(0);
-    message_end();
+	message_begin(MSG_ONE_UNRELIABLE, SVC_WEAPONANIM, .player = id);
+	write_byte(iAnimation);
+	write_byte(0);
+	message_end();
 }
 
 public CBasePlayer_ThrowGrenade_Pre(const id, const item, const Float:vecSrc[3], const Float:vecThrow[3], const Float:time, const const usEvent) {
@@ -612,18 +685,32 @@ explodeNade(const grenade) {
 
 	rh_emit_sound2(grenade, 0, CHAN_WEAPON, SOUND_EXPLODE, VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
 
-	new id = get_entvar(grenade, var_owner);
-	new team = get_member(id, m_iTeam);
+	new TeamName:team = get_member(get_entvar(grenade, var_owner), m_iTeam);
+	new Float:fHealAmount = get_entvar(grenade, var_HealthNade_ThrowHealingAmount);
 
-	for (new player = 1, Float:playerOrigin[3]; player <= MaxClients; player++) {
-		if (!is_user_alive(player) || get_member(player, m_iTeam) != team) {
-			continue;
-		}
+	if (Cvar(NewRadiusFunc_Use)) {
+		// TODO: Прокинуть все нужные параметры в квары
+		// TODO: Протестить
+		RadiusHeal(
+			origin, fHealAmount, fRadius,
+			.iFunc=RadiusHeal_Linear, .fFuncVar=1.0,
+			.iInnerRadiusBehavior=RadiusHeal_OffsetX, .fInnerRadius=fRadius*0.1,
+			.bCalcFromHitbox=false,
+			.bThroughWalls=false,
+			.bEffect=true,
+			.iTeam=team
+		);
+	} else {
+		for (new player = 1, Float:playerOrigin[3]; player <= MaxClients; player++) {
+			if (!is_user_alive(player) || get_member(player, m_iTeam) != team) {
+				continue;
+			}
 
-		get_entvar(player, var_origin, playerOrigin);
-		if (get_distance_f(origin, playerOrigin) < fRadius) {
-			if (ExecuteHamB(Ham_TakeHealth, player, get_entvar(grenade, var_HealthNade_ThrowHealingAmount), DMG_GENERIC))
-				UTIL_ScreenFade(player);
+			get_entvar(player, var_origin, playerOrigin);
+			if (get_distance_f(origin, playerOrigin) < fRadius) {
+				if (ExecuteHamB(Ham_TakeHealth, player, fHealAmount, DMG_GENERIC))
+					UTIL_ScreenFade(player);
+			}
 		}
 	}
 
@@ -692,6 +779,12 @@ InitCvars() {
 		LangS("HEALTHNADE_CVAR_SLOT_ID"),
 		true, 1.0, true, 5.0
 	), Cvar(SlotId));
+
+	bind_pcvar_num(create_cvar(
+		"HealthNade_NewRadiusFunc_Use", "0", FCVAR_NONE,
+		LangS("HEALTHNADE_CVAR_NEW_RADIUS_FUNC_USE"),
+		true, 0.0, true, 1.0
+	), Cvar(NewRadiusFunc_Use));
 
 	AutoExecConfig(true, "HealthNade");
 
@@ -837,6 +930,141 @@ bool:UserHasFlagsS(const UserId, const sFlags[], const bool:bStrict = false) {
 	return bStrict
 		? (iUserFlags & iFlags) == iFlags
 		: (iUserFlags & iFlags) > 0;
+}
+
+/**
+* Наносит урон игрокам в указанном радиусе
+*
+* @param fvOrigin Источник лечения
+* @param fBaseHeal Базовое значение лечения (впритык в источнику)
+* @param fRadius Радиус лечения
+* @param bitsHealType Тип лечения (см. константы DMG_)
+* @param iFunc Функция, для вычисления силы лечения в зависимости от расстояния (см. RadiusHeal_Func)
+* @param fFuncVar Дополнительный параметр функции
+* @param fInnerRadius Значение внутреннего радиуса, в котором сила лечения будет максимальной
+* @param iInnerRadiusBehavior Определяет механику работы внутреннего радиуса (см. RadiusHeal_InnerRadiusBehavior)
+* @param bCalcFromHitbox Если true - будет считать расстояние от края хитбокса, иначе от центра
+* @param bThroughWalls Должно ли лечение работать через стены
+* @param bEffect Включить зелёное свечение экрана при лечении
+* @param iTeam Если указана команда, отличная от TEAM_UNASSIGNED, лечение будет работать только для указанной команды (см. enum TeamName)
+*
+* @note src: https://dev-cs.ru/threads/222/page-18#post-147774
+*
+* @noreturn
+*/
+RadiusHeal(
+	const Float:fvOrigin[3],
+	const Float:fBaseHeal,
+	const Float:fRadius,
+	const bitsHealType = DMG_GENERIC,
+
+	// Additional parameters
+	const RadiusHeal_Func:iFunc = RadiusHeal_Linear,
+	const Float:fFuncVar = 0.0,
+
+	const Float:fInnerRadius = 0.0,
+	const RadiusHeal_InnerRadiusBehavior:iInnerRadiusBehavior = RadiusHeal_OffsetX,
+
+	const bool:bCalcFromHitbox = false,
+	const bool:bThroughWalls = false,
+	const bool:bEffect = true,
+	const TeamName:iTeam = TEAM_UNASSIGNED
+) {
+	new EntId = -1;
+	new const Float:fInnerRadiusPercent = fInnerRadius / fRadius;
+
+	// Цикл только по игрокам в радиусе
+	while ((EntId = engfunc(EngFunc_FindEntityInSphere, EntId, fvOrigin, fRadius)) != 0 && EntId <= MAX_PLAYERS) {
+		if (!is_user_alive(EntId)) {
+			continue;
+		}
+
+		if (iTeam != TEAM_UNASSIGNED && get_member(EntId, m_iTeam) != iTeam) {
+			continue;
+		}
+
+		new Float:fvEntOrigin[3];
+		get_entvar(EntId, var_origin, fvEntOrigin);
+
+		if (bCalcFromHitbox || !bThroughWalls) {
+			new iTrace = create_tr2();
+			engfunc(EngFunc_TraceLine, fvOrigin, fvEntOrigin, DONT_IGNORE_MONSTERS, FM_NULLENT, iTrace);
+
+			new Float:fFraction;
+			get_tr2(iTrace, TR_flFraction, fFraction);
+			new iTracedEnt = get_tr2(iTrace, TR_pHit);
+
+			if (!bThroughWalls && iTracedEnt != EntId && fFraction != 1.0) {
+				continue;
+			}
+
+			if (bCalcFromHitbox) {
+				get_tr2(iTrace, TR_vecEndPos, fvEntOrigin);
+			}
+			
+			free_tr2(iTrace);
+		}
+
+		new Float:fDistance = xs_vec_distance(fvOrigin, fvEntOrigin);
+		
+		new Float:fHealMult;
+		if (iInnerRadiusBehavior == RadiusHeal_Overlay && fDistance <= fInnerRadius) {
+			fHealMult = 1.0;
+		} else {
+			new Float:fDistancePercent;
+			if (iInnerRadiusBehavior == RadiusHeal_OffsetX) {
+				fDistancePercent = 1.0 - floatclamp(((fDistance - fInnerRadius) / (fRadius - fInnerRadius)), 0.0, 1.0);
+			} else {
+				fDistancePercent = 1.0 - floatmin((fDistance / fRadius), 1.0);
+			}
+
+			fHealMult = RadiusHeal_CalcFunc(iFunc, fDistancePercent, fFuncVar);
+
+			if (iInnerRadiusBehavior == RadiusHeal_OffsetFx) {
+				fHealMult = floatmin(fHealMult + fInnerRadiusPercent, 1.0);
+			}
+		}
+		
+		if (ExecuteHamB(Ham_TakeHealth, EntId, fBaseHeal * fHealMult, bitsHealType) && bEffect) {
+			UTIL_ScreenFade(EntId);
+		}
+	}
+}
+
+Float:RadiusHeal_CalcFunc(const RadiusHeal_Func:iFunc, const Float:fX, const Float:fFuncVar = 0.0) {
+	new Float:fVar = fFuncVar;
+	if (fVar == 0.0) {
+		switch (iFunc) {
+			case RadiusHeal_Sqr, RadiusHeal_Sqrt:
+				fVar = 2.0;
+			case RadiusHeal_Linear, RadiusHeal_Static:
+				fVar = 1.0;
+			// Для остальных не используется
+		}
+	}
+	
+	new Float:fRes;
+	switch (iFunc) {
+		case RadiusHeal_Static:
+			fRes = fVar;
+		case RadiusHeal_Linear:
+			fRes = fX * fVar;
+		case RadiusHeal_Sqr:
+			fRes = floatpower(fX, fVar);
+		case RadiusHeal_Sqrt:
+			fRes = floatpower(fX, 1 / fVar);
+
+		// Эти числа подобраны тупым перебором,
+		// чтобы значения функций влезали в диапазон [0.0; 1.0] при 0.0 < fX < 1.0
+		case RadiusHeal_Sin:
+			fRes = floatsin(fX * 1.57, radian);
+		case RadiusHeal_Tan:
+			fRes = floattan(fX * 0.7854, radian);
+		case RadiusHeal_Arcsin:
+			fRes = (floatasin((fX - 0.5) * 2, radian) + 1.5) / 3;
+	}
+
+	return floatclamp(fRes, 0.0, 1.0);
 }
 
 public plugin_natives() {
