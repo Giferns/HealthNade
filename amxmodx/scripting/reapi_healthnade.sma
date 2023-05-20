@@ -26,9 +26,11 @@
 		* Исправлена логика создания кастомного веапонбокса
 	0.0.9f:
 		* Добавлен квар HealthNade_SlotId
+	0.0.10f:
+		* Добавлен квар HealthNade_EquipDelay
 */
 
-new const PLUGIN_VERSION[] = "0.0.9f";
+new const PLUGIN_VERSION[] = "0.0.10f";
 
 #pragma semicolon 1
 
@@ -52,6 +54,7 @@ enum E_Cvars {
 	bool:Cvar_Give,
 	Cvar_Give_AccessFlags[16],
 	Cvar_Give_MinRound,
+	Float:Cvar_EquipDelay,
 	bool:Cvar_Msg_FullHp,
 	bool:Cvar_Msg_UsageHint,
 	E_NadeDropType:Cvar_NadeDrop,
@@ -207,6 +210,8 @@ public HookWeaponList(const msg_id, const msg_dest, const msg_entity) {
 #endif
 
 public CBasePlayer_OnSpawnEquip_Post(const id) {
+	remove_task(id);
+
 	if (!Cvar(Give) || !UserHasFlagsS(id, Cvar(Give_AccessFlags))) {
 		return;
 	}
@@ -215,7 +220,18 @@ public CBasePlayer_OnSpawnEquip_Post(const id) {
 		return;
 	}
 
-	giveNade(id);
+	if(!Cvar(EquipDelay)) {
+		giveNade(id);
+		return;
+	}
+
+	set_task(Cvar(EquipDelay), "task_DelayedEquip", id);
+}
+
+public task_DelayedEquip(const id) {
+	if(is_user_alive(id)) {
+		giveNade(id);
+	}
 }
 
 public CBasePlayer_Killed_Pre(const id) {
@@ -668,6 +684,12 @@ InitCvars() {
 		LangS("HEALTHNADE_CVAR_GIVE_MIN_ROUND"),
 		true, 1.0
 	), Cvar(Give_MinRound));
+
+	bind_pcvar_float(create_cvar(
+		"HealthNade_EquipDelay", "0.0", FCVAR_NONE,
+		LangS("HEALTHNADE_CVAR_EQUIP_DELAY"),
+		true, 0.0
+	), Cvar(EquipDelay));
 
 	bind_pcvar_num(create_cvar(
 		"HealthNade_Msg_UsageHint", "1", FCVAR_NONE,
