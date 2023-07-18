@@ -16,20 +16,33 @@ HealthNade_ThrowHealingAmount "20.0"
 // Кол-во ХП, восполняемое от выпивания гранаты.
 HealthNade_DrinkHealingAmount "35.0"
 
+// Выдавать ли хилку при спавне.
+HealthNade_Give "0"
+
 // Флаги доступа для получения гранаты при спавне. Оставить пустым, чтобы выдавать всем.
 HealthNade_Give_AccessFlags "t"
 
 // С какого раунда будет выдаваться граната.
 HealthNade_Give_MinRound "1"
 
-// Выдавать ли хилку при спавне.
-HealthNade_Give "0"
+// Задержка выдачи (в секундах)
+HealthNade_EquipDelay "0.0"
+
+// Подменять дымовую гранату?
+HealthNade_ReplaceSmokegren "0"
 
 // Показывать подсказку по использованию гранаты.
 HealthNade_Msg_UsageHint "1"
 
 // Показывать сообщение при попытке вылечиться с полным ХП.
 HealthNade_Msg_FullHp "1"
+
+// Тип дропа
+// 0 - выкл | 1 - вкл | 2 - учитывать квар mp_nadedrops
+HealthNade_NadeDrop "2"
+
+// Номер слота, в котором будет хилка (1-5)
+HealthNade_SlotId "4"
 ```
 
 ## Благодарности
