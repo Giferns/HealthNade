@@ -28,9 +28,11 @@
 		* Добавлен квар HealthNade_SlotId
 	0.0.10f:
 		* Добавлен квар HealthNade_EquipDelay
+	0.0.11f
+		* Добавлен квар HealthNade_ReplaceSmokegren
 */
 
-new const PLUGIN_VERSION[] = "0.0.10f";
+new const PLUGIN_VERSION[] = "0.0.11f";
 
 #pragma semicolon 1
 
@@ -55,6 +57,7 @@ enum E_Cvars {
 	Cvar_Give_AccessFlags[16],
 	Cvar_Give_MinRound,
 	Float:Cvar_EquipDelay,
+	bool:Cvar_ReplaceSmokegren,
 	bool:Cvar_Msg_FullHp,
 	bool:Cvar_Msg_UsageHint,
 	E_NadeDropType:Cvar_NadeDrop,
@@ -149,6 +152,9 @@ public plugin_init() {
 	RegisterHam(Ham_Item_PostFrame, WEAPON_NAME, "CBasePlayerWeapon_ItemPostFrame_Pre");
 
 	RegisterHookChain(RG_CBasePlayer_ThrowGrenade, "CBasePlayer_ThrowGrenade_Pre", false);
+
+	RegisterHookChain(RG_CBasePlayer_AddPlayerItem, "CBasePlayer_AddPlayerItem_Pre");
+	RegisterHookChain(RG_CBasePlayer_HasRestrictItem, "CBasePlayer_HasRestrictItem_Pre");
 
 	MsgIdAmmoPickup = get_user_msgid("AmmoPickup");
 	MsgIdStatusIcon = get_user_msgid("StatusIcon");
@@ -497,6 +503,36 @@ public CBasePlayer_ThrowGrenade_Pre(const id, const item, const Float:vecSrc[3],
 	return HC_SUPERCEDE;
 }
 
+public CBasePlayer_AddPlayerItem_Pre(const id, const item) {
+	if(!Cvar(ReplaceSmokegren) || is_nullent(item) || get_member(item, m_iId) != WEAPON_SMOKEGRENADE || !is_user_alive(id)) {
+		return HC_CONTINUE;
+	}
+
+	set_entvar(item, var_flags, FL_KILLME);
+
+	giveNade(id);
+
+	SetHookChainReturn(ATYPE_INTEGER, 0);
+	return HC_SUPERCEDE;
+}
+
+public CBasePlayer_HasRestrictItem_Pre(id, ItemID:item, ItemRestType:rest_type) {
+	if(!Cvar(ReplaceSmokegren)) {
+		return HC_CONTINUE;
+	}
+
+	if(item ==ITEM_SMOKEGRENADE && rg_get_player_item(id, ITEM_CLASSNAME, ITEM_SLOT)) {
+		if(rest_type == ITEM_TYPE_BUYING) {
+			client_print(id, print_center, "#Cstrike_TitlesTXT_Cannot_Carry_Anymore");
+		}
+
+		SetHookChainReturn(ATYPE_BOOL, true);
+		return HC_SUPERCEDE;
+	}
+
+	return HC_CONTINUE;
+}
+
 public GrenadeTouch(const grenade, const other) {
 	if (!is_nullent(grenade)) {
 		explodeNade(grenade);
@@ -690,6 +726,12 @@ InitCvars() {
 		LangS("HEALTHNADE_CVAR_EQUIP_DELAY"),
 		true, 0.0
 	), Cvar(EquipDelay));
+
+	bind_pcvar_num(create_cvar(
+		"HealthNade_ReplaceSmokegren", "0.0", FCVAR_NONE,
+		LangS("HEALTHNADE_CVAR_REPLACE_SG"),
+		true, 0.0, true, 1.0
+	), Cvar(ReplaceSmokegren));
 
 	bind_pcvar_num(create_cvar(
 		"HealthNade_Msg_UsageHint", "1", FCVAR_NONE,
