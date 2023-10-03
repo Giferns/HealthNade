@@ -30,9 +30,11 @@
 		* Добавлен квар HealthNade_EquipDelay
 	0.0.11f
 		* Добавлен квар HealthNade_ReplaceSmokegren
+	0.0.12f
+		* Добавлен квар HealthNade_Drink_AccessFlags
 */
 
-new const PLUGIN_VERSION[] = "0.0.11f";
+new const PLUGIN_VERSION[] = "0.0.12f";
 
 #pragma semicolon 1
 
