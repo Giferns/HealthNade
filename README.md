@@ -22,6 +22,9 @@ HealthNade_Give "0"
 // Флаги доступа для получения гранаты при спавне. Оставить пустым, чтобы выдавать всем.
 HealthNade_Give_AccessFlags "t"
 
+// Флаги доступа для возможности выпивания.
+HealthNade_Drink_AccessFlags "t"
+
 // С какого раунда будет выдаваться граната.
 HealthNade_Give_MinRound "1"
 
