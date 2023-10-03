@@ -55,6 +55,7 @@ enum E_Cvars {
 	Float:Cvar_DrinkHealingAmount,
 	bool:Cvar_Give,
 	Cvar_Give_AccessFlags[16],
+	Cvar_Drink_AccessFlags[16],
 	Cvar_Give_MinRound,
 	Float:Cvar_EquipDelay,
 	bool:Cvar_ReplaceSmokegren,
@@ -430,6 +431,11 @@ public CBasePlayerWeapon_SecondaryAttack_Post(weapon) {
 		return;
 	}
 
+	if(!UserHasFlagsS(pPlayer, Cvar(Drink_AccessFlags))) {
+		client_print(pPlayer, print_center, "%L", pPlayer, "HEALTHNADE_NO_ACCESS");
+		return;
+	}
+
 	if(Float:get_entvar(pPlayer, var_health) >= Float:get_entvar(pPlayer, var_max_health)) {
 		if (Cvar(Msg_FullHp)) {
 			client_print(pPlayer, print_center, "%L", pPlayer, "HEALTHNADE_FULL_HP");
@@ -714,6 +720,11 @@ InitCvars() {
 		"HealthNade_Give_AccessFlags", "t", FCVAR_NONE,
 		LangS("HEALTHNADE_CVAR_GIVE_ACCESS_FLAGS")
 	), Cvar(Give_AccessFlags), charsmax(Cvar(Give_AccessFlags)));
+
+	bind_pcvar_string(create_cvar(
+		"HealthNade_Drink_AccessFlags", "t", FCVAR_NONE,
+		LangS("HEALTHNADE_CVAR_DRINK_ACCESS_FLAGS")
+	), Cvar(Drink_AccessFlags), charsmax(Cvar(Drink_AccessFlags)));
 
 	bind_pcvar_num(create_cvar(
 		"HealthNade_Give_MinRound", "1", FCVAR_NONE,
