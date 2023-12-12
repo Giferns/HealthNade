@@ -8,7 +8,7 @@
 
 ```
 // Этот файл был автоматически создан AMX Mod X (v1.9.0.5294)
-// Квары для плагина "[ReAPI] Healthnade" от "DEV-CS.RU Community" (reapi_healthnade.amxx, v0.0.12f)
+// Квары для плагина "[ReAPI] Healthnade" от "DEV-CS.RU Community" (reapi_healthnade.amxx, v0.0.13f)
 
 
 // Радиус взрыва гранаты.
