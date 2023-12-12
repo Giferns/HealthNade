@@ -32,9 +32,14 @@
 		* Добавлен квар HealthNade_ReplaceSmokegren
 	0.0.12f
 		* Добавлен квар HealthNade_Drink_AccessFlags
+	0.0.13f
+	    * Добавлены квары и обновлен словарь 
+		   HealthNade_ThrowHealingAmount_With_Flags
+           HealthNade_DrinkHealingAmount_With_Flags
+           HealthNade_ThorwHealing_AccessFlags
 */
 
-new const PLUGIN_VERSION[] = "0.0.12f";
+new const PLUGIN_VERSION[] = "0.0.13f";
 
 #pragma semicolon 1
 
@@ -54,10 +59,13 @@ enum E_NadeDropType {
 enum E_Cvars {
 	Float:Cvar_ExplodeRadius,
 	Float:Cvar_ThrowHealingAmount,
+	Float:Cvar_ThrowHealingAmountWithFlags,
 	Float:Cvar_DrinkHealingAmount,
+	Float:Cvar_DrinkHealingAmountWithFlags,
 	bool:Cvar_Give,
 	Cvar_Give_AccessFlags[16],
 	Cvar_Drink_AccessFlags[16],
+	Cvar_ThrowHealing_AccessFlags[16],
 	Cvar_Give_MinRound,
 	Float:Cvar_EquipDelay,
 	bool:Cvar_ReplaceSmokegren,
@@ -576,8 +584,18 @@ giveNade(const id) {
 	set_entvar(item, var_classname, ITEM_CLASSNAME);
 
 	set_entvar(item, var_HealthNade_Radius, Cvar(ExplodeRadius));
-	set_entvar(item, var_HealthNade_ThrowHealingAmount, Cvar(ThrowHealingAmount));
-	set_entvar(item, var_HealthNade_DrinkHealingAmount,  Cvar(DrinkHealingAmount));
+
+	if(UserHasFlagsS(id, Cvar(ThrowHealing_AccessFlags))){
+		set_entvar(item, var_HealthNade_ThrowHealingAmount, Cvar(ThrowHealingAmountWithFlags));
+	}else{
+		set_entvar(item, var_HealthNade_ThrowHealingAmount, Cvar(ThrowHealingAmount));
+	}
+
+	if(UserHasFlagsS(id, Cvar(Drink_AccessFlags))){
+		set_entvar(item, var_HealthNade_DrinkHealingAmount,  Cvar(DrinkHealingAmountWithFlags));
+	}else{
+		set_entvar(item, var_HealthNade_DrinkHealingAmount,  Cvar(DrinkHealingAmount));
+	}
 
 	dllfunc(DLLFunc_Spawn, item);
 
@@ -709,9 +727,19 @@ InitCvars() {
 	), Cvar(ThrowHealingAmount));
 
 	bind_pcvar_float(create_cvar(
+		"HealthNade_ThrowHealingAmount_With_Flags", "40.0", FCVAR_NONE,
+		LangS("HEALTHNADE_CVAR_THROW_HEALING_AMOUNT_WITH_FLAGS")
+	), Cvar(ThrowHealingAmountWithFlags));
+
+	bind_pcvar_float(create_cvar(
 		"HealthNade_DrinkHealingAmount", "35.0", FCVAR_NONE,
 		LangS("HEALTHNADE_CVAR_DRINK_HEALING_AMOUNT")
 	), Cvar(DrinkHealingAmount));
+
+	bind_pcvar_float(create_cvar(
+		"HealthNade_DrinkHealingAmount_With_Flags", "60.0", FCVAR_NONE,
+		LangS("HEALTHNADE_CVAR_DRINK_HEALING_AMOUNT_WITH_FLAGS")
+	), Cvar(DrinkHealingAmountWithFlags));
 
 	bind_pcvar_num(create_cvar(
 		"HealthNade_Give", "1", FCVAR_NONE,
@@ -722,6 +750,11 @@ InitCvars() {
 		"HealthNade_Give_AccessFlags", "t", FCVAR_NONE,
 		LangS("HEALTHNADE_CVAR_GIVE_ACCESS_FLAGS")
 	), Cvar(Give_AccessFlags), charsmax(Cvar(Give_AccessFlags)));
+
+	bind_pcvar_string(create_cvar(
+		"HealthNade_ThorwHealing_AccessFlags", "t", FCVAR_NONE,
+		LangS("HEALTHNADE_CVAR_THROWHEALING_ACCESS_FLAGS")
+	), Cvar(ThrowHealing_AccessFlags), charsmax(Cvar(ThrowHealing_AccessFlags)));
 
 	bind_pcvar_string(create_cvar(
 		"HealthNade_Drink_AccessFlags", "t", FCVAR_NONE,
