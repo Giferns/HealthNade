@@ -748,7 +748,7 @@ InitCvars() {
 	), Cvar(Give_AccessFlags), charsmax(Cvar(Give_AccessFlags)));
 
 	bind_pcvar_string(create_cvar(
-		"HealthNade_ThorwHealing_AccessFlags", "t", FCVAR_NONE,
+		"HealthNade_Override_AccessFlags", "t", FCVAR_NONE,
 		LangS("HEALTHNADE_CVAR_THROWHEALING_ACCESS_FLAGS")
 	), Cvar(Override_AccessFlags), charsmax(Cvar(Override_AccessFlags)));
 
