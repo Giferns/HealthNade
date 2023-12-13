@@ -33,10 +33,10 @@
 	0.0.12f
 		* Добавлен квар HealthNade_Drink_AccessFlags
 	0.0.13f
-	    * Добавлены квары и обновлен словарь 
-		   HealthNade_ThrowHealingAmount_With_Flags
-           HealthNade_DrinkHealingAmount_With_Flags
-           HealthNade_ThorwHealing_AccessFlags
+		* Добавлены квары и обновлен словарь
+		* HealthNade_ThrowHealingAmount_With_Flags
+		* HealthNade_DrinkHealingAmount_With_Flags
+		* HealthNade_Override_AccessFlags
 */
 
 new const PLUGIN_VERSION[] = "0.0.13f";
@@ -65,7 +65,7 @@ enum E_Cvars {
 	bool:Cvar_Give,
 	Cvar_Give_AccessFlags[16],
 	Cvar_Drink_AccessFlags[16],
-	Cvar_ThrowHealing_AccessFlags[16],
+	Cvar_Override_AccessFlags[16],
 	Cvar_Give_MinRound,
 	Float:Cvar_EquipDelay,
 	bool:Cvar_ReplaceSmokegren,
@@ -585,15 +585,11 @@ giveNade(const id) {
 
 	set_entvar(item, var_HealthNade_Radius, Cvar(ExplodeRadius));
 
-	if(UserHasFlagsS(id, Cvar(ThrowHealing_AccessFlags))){
+	if(UserHasFlagsS(id, Cvar(Override_AccessFlags))){
 		set_entvar(item, var_HealthNade_ThrowHealingAmount, Cvar(ThrowHealingAmountWithFlags));
-	}else{
-		set_entvar(item, var_HealthNade_ThrowHealingAmount, Cvar(ThrowHealingAmount));
-	}
-
-	if(UserHasFlagsS(id, Cvar(Drink_AccessFlags))){
 		set_entvar(item, var_HealthNade_DrinkHealingAmount,  Cvar(DrinkHealingAmountWithFlags));
 	}else{
+		set_entvar(item, var_HealthNade_ThrowHealingAmount, Cvar(ThrowHealingAmount));
 		set_entvar(item, var_HealthNade_DrinkHealingAmount,  Cvar(DrinkHealingAmount));
 	}
 
@@ -754,7 +750,7 @@ InitCvars() {
 	bind_pcvar_string(create_cvar(
 		"HealthNade_ThorwHealing_AccessFlags", "t", FCVAR_NONE,
 		LangS("HEALTHNADE_CVAR_THROWHEALING_ACCESS_FLAGS")
-	), Cvar(ThrowHealing_AccessFlags), charsmax(Cvar(ThrowHealing_AccessFlags)));
+	), Cvar(Override_AccessFlags), charsmax(Cvar(Override_AccessFlags)));
 
 	bind_pcvar_string(create_cvar(
 		"HealthNade_Drink_AccessFlags", "t", FCVAR_NONE,
