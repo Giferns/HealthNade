@@ -37,9 +37,11 @@
 		* HealthNade_ThrowHealingAmount_With_Flags
 		* HealthNade_DrinkHealingAmount_With_Flags
 		* HealthNade_Override_AccessFlags
+	0.0.14f (29.12.2023)
+		* Расширено API под внешнюю выдачу (форварды HealthNade_CanEquip() и HealthNade_GetProp())
 */
 
-new const PLUGIN_VERSION[] = "0.0.13f";
+new const PLUGIN_VERSION[] = "0.0.14f";
 
 #pragma semicolon 1
 
@@ -112,6 +114,7 @@ new MsgIdWeaponList, MsgIdAmmoPickup, MsgIdStatusIcon, MsgIdScreenFade;
 new FwdRegUserMsg, MsgHookWeaponList;
 #endif
 new g_iCvarNadeDrops;
+new g_fwdCanEquip, g_fwdGetProp, g_PropString[MAX_PROP_STRING_LEN];
 
 public plugin_precache() {
 	register_plugin("[ReAPI] Healthnade", PLUGIN_VERSION, "DEV-CS.RU Community");
@@ -148,6 +151,9 @@ public plugin_precache() {
 
 public plugin_init() {
 	register_clcmd(WEAPON_NEW_NAME, "CmdSelect");
+
+	g_fwdCanEquip = CreateMultiForward("HealthNade_CanEquip", ET_STOP, FP_CELL);
+	g_fwdGetProp = CreateMultiForward("HealthNade_GetProp", ET_STOP, FP_CELL, FP_CELL, FP_VAL_BYREF, FP_ARRAY);
 
 	RegisterHookChain(RG_CBasePlayer_OnSpawnEquip, "CBasePlayer_OnSpawnEquip_Post", true);
 	RegisterHookChain(RG_CBasePlayer_Killed, "CBasePlayer_Killed_Pre", false);
@@ -234,6 +240,13 @@ public CBasePlayer_OnSpawnEquip_Post(const id) {
 	}
 
 	if(rg_get_current_round() < Cvar(Give_MinRound)) {
+		return;
+	}
+
+	new iRet;
+	ExecuteForward(g_fwdCanEquip, iRet, id);
+
+	if(iRet) {
 		return;
 	}
 
@@ -441,7 +454,12 @@ public CBasePlayerWeapon_SecondaryAttack_Post(weapon) {
 		return;
 	}
 
-	if(!UserHasFlagsS(pPlayer, Cvar(Drink_AccessFlags))) {
+	new Float:fDrinkHealingAmount, iRet;
+
+	//g_PropString[0] = EOS;
+	ExecuteForward(g_fwdGetProp, iRet, pPlayer, HnProp_DrinkHealingAmount, fDrinkHealingAmount, PrepareArray(g_PropString, sizeof(g_PropString), .copyback = 1));
+
+	if((!iRet || fDrinkHealingAmount < 1.0) && !UserHasFlagsS(pPlayer, Cvar(Drink_AccessFlags))) {
 		client_print(pPlayer, print_center, "%L", pPlayer, "HEALTHNADE_NO_ACCESS");
 		return;
 	}
@@ -496,7 +514,16 @@ public CBasePlayerWeapon_ItemPostFrame_Pre(weapon) {
 	// https://github.com/s1lentq/ReGameDLL_CS/blob/b979b5e84f36dc0eb870f97da670b700756217f1/regamedll/dlls/wpn_shared/wpn_smokegrenade.cpp#L225
 	set_member(weapon, m_flReleaseThrow, 0.1);
 
-	ExecuteHamB(Ham_TakeHealth, pPlayer, get_entvar(weapon, var_HealthNade_DrinkHealingAmount), DMG_GENERIC);
+	new Float:fDrinkHealingAmount, iRet;
+
+	//g_PropString[0] = EOS;
+	ExecuteForward(g_fwdGetProp, iRet, pPlayer, HnProp_DrinkHealingAmount, fDrinkHealingAmount, PrepareArray(g_PropString, sizeof(g_PropString), .copyback = 1));
+
+	if(!iRet || fDrinkHealingAmount < 0.0) {
+		fDrinkHealingAmount = get_entvar(weapon, var_HealthNade_DrinkHealingAmount);
+	}
+
+	ExecuteHamB(Ham_TakeHealth, pPlayer, fDrinkHealingAmount, DMG_GENERIC);
 	UTIL_ScreenFade(pPlayer);
 }
 
@@ -678,7 +705,16 @@ explodeNade(const grenade) {
 	new Float:origin[3];
 	get_entvar(grenade, var_origin, origin);
 
-	new Float:fRadius = get_entvar(grenade, var_HealthNade_Radius);
+	new id = get_entvar(grenade, var_owner);
+
+	new Float:fRadius, iRet;
+
+	//g_PropString[0] = EOS;
+	ExecuteForward(g_fwdGetProp, iRet, id, HnProp_ExplodeRadius, fRadius, PrepareArray(g_PropString, sizeof(g_PropString), .copyback = 1));
+
+	if(!iRet || fRadius < 0.0) {
+		fRadius = get_entvar(grenade, var_HealthNade_Radius);
+	}
 
 	UTIL_BeamCylinder(origin, SpriteCylinder, 1, 5, 30, 1, {10, 255, 40}, 255, 5, fRadius);
 	UTIL_CreateExplosion(origin, 65.0, SpriteExplode, 30, 20, (TE_EXPLFLAG_NOSOUND | TE_EXPLFLAG_NOPARTICLES));
@@ -686,8 +722,17 @@ explodeNade(const grenade) {
 
 	rh_emit_sound2(grenade, 0, CHAN_WEAPON, SOUND_EXPLODE, VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
 
-	new id = get_entvar(grenade, var_owner);
 	new team = get_member(id, m_iTeam);
+
+	new Float:fThrowHealingAmount;
+
+	iRet = 0;
+	//g_PropString[0] = EOS;
+	ExecuteForward(g_fwdGetProp, iRet, id, HnProp_ThrowHealingAmount, fThrowHealingAmount, PrepareArray(g_PropString, sizeof(g_PropString), .copyback = 1));
+
+	if(!iRet || fThrowHealingAmount < 0.0) {
+		fThrowHealingAmount = get_entvar(grenade, var_HealthNade_ThrowHealingAmount);
+	}
 
 	for (new player = 1, Float:playerOrigin[3]; player <= MaxClients; player++) {
 		if (!is_user_alive(player) || get_member(player, m_iTeam) != team) {
@@ -695,9 +740,9 @@ explodeNade(const grenade) {
 		}
 
 		get_entvar(player, var_origin, playerOrigin);
-		if (get_distance_f(origin, playerOrigin) < fRadius) {
-			if (ExecuteHamB(Ham_TakeHealth, player, get_entvar(grenade, var_HealthNade_ThrowHealingAmount), DMG_GENERIC))
-				UTIL_ScreenFade(player);
+
+		if (get_distance_f(origin, playerOrigin) < fRadius && ExecuteHamB(Ham_TakeHealth, player, fThrowHealingAmount, DMG_GENERIC)) {
+			UTIL_ScreenFade(player);
 		}
 	}
 
