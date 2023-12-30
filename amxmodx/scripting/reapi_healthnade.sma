@@ -13,35 +13,48 @@
 
 	0.0.4f:
 		* Добавлена опция MIN_ROUND (минимальный раунд для автовыдачи по флагу)
+
 	0.0.5f:
 		* Добавлен натив HealthNade_GiveNade()
+
 	0.0.6f:
 		* Перенос параметров хилки в переменные сущности: https://github.com/Giferns/HealthNade/pull/1
+
 	0.0.7f:
 		* Добавлены квары и словарь
+
 	0.0.8f:
 		* Фикс учёта mp_nadedrops (теперь учитывает значение на лету)
 		* Добавлен недостающий учёт квара HealthNade_Give
 		* Значение квара HealthNade_Give по-умолчанию теперь 1 (было 0)
 		* Исправлена логика создания кастомного веапонбокса
+
 	0.0.9f:
 		* Добавлен квар HealthNade_SlotId
+
 	0.0.10f:
 		* Добавлен квар HealthNade_EquipDelay
+
 	0.0.11f
 		* Добавлен квар HealthNade_ReplaceSmokegren
+
 	0.0.12f
 		* Добавлен квар HealthNade_Drink_AccessFlags
+
 	0.0.13f
 		* Добавлены квары и обновлен словарь
 		* HealthNade_ThrowHealingAmount_With_Flags
 		* HealthNade_DrinkHealingAmount_With_Flags
 		* HealthNade_Override_AccessFlags
+
 	0.0.14f (29.12.2023)
 		* Расширено API под внешнюю выдачу (форварды HealthNade_CanEquip() и HealthNade_GetProp())
+
+	0.0.15f (30.12.2023)
+		* Добавлен натив HealthNade_HasNade()
 */
 
-new const PLUGIN_VERSION[] = "0.0.14f";
+new const PLUGIN_VERSION[] = "0.0.15f";
 
 #pragma semicolon 1
 
@@ -428,11 +441,11 @@ public Item_Holster_Post(const item) {
 }
 
 enum {
-    HG_ANIMATION_IDLE = 0,
-    HG_ANIMATION_PULLPIN,
-    HG_ANIMATION_THROW,
+	HG_ANIMATION_IDLE = 0,
+	HG_ANIMATION_PULLPIN,
+	HG_ANIMATION_THROW,
 	HG_ANIMATION_DEPLOY,
-    HG_ANIMATION_DRINK
+	HG_ANIMATION_DRINK
 };
 
 public CBasePlayerWeapon_SecondaryAttack_Post(weapon) {
@@ -528,12 +541,12 @@ public CBasePlayerWeapon_ItemPostFrame_Pre(weapon) {
 }
 
 stock SendWeaponAnimation(const id, const iAnimation) {
-    set_entvar(id, var_weaponanim, iAnimation);
+	set_entvar(id, var_weaponanim, iAnimation);
 
-    message_begin(MSG_ONE_UNRELIABLE, SVC_WEAPONANIM, .player = id);
-    write_byte(iAnimation);
-    write_byte(0);
-    message_end();
+	message_begin(MSG_ONE_UNRELIABLE, SVC_WEAPONANIM, .player = id);
+	write_byte(iAnimation);
+	write_byte(0);
+	message_end();
 }
 
 public CBasePlayer_ThrowGrenade_Pre(const id, const item, const Float:vecSrc[3], const Float:vecThrow[3], const Float:time, const const usEvent) {
@@ -992,6 +1005,7 @@ bool:UserHasFlagsS(const UserId, const sFlags[], const bool:bStrict = false) {
 
 public plugin_natives() {
 	register_native("HealthNade_GiveNade", "_HealthNade_GiveNade");
+	register_native("HealthNade_HasNade", "_HealthNade_HasNade");
 }
 
 public _HealthNade_GiveNade() {
@@ -1003,4 +1017,16 @@ public _HealthNade_GiveNade() {
 	}
 
 	return NULLENT;
+}
+
+public _HealthNade_HasNade() {
+	enum { player = 1 };
+
+	new pPlayer = get_param(player);
+
+	if(!is_user_alive(pPlayer)) {
+		return false;
+	}
+
+	return bool:(get_member(pPlayer, m_rgAmmo, AMMO_ID));
 }
