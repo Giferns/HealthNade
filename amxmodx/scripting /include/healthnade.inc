@@ -57,4 +57,4 @@ native bool:HealthNade_HasNade(const id);
  *
  * @return      true/false.
  */
-native IsPlayer_HealthNade(const id)
+native IsPlayer_HealthNade(const id);
