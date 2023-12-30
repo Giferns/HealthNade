@@ -428,11 +428,11 @@ public Item_Holster_Post(const item) {
 }
 
 enum {
-    HG_ANIMATION_IDLE = 0,
-    HG_ANIMATION_PULLPIN,
-    HG_ANIMATION_THROW,
+	HG_ANIMATION_IDLE = 0,
+	HG_ANIMATION_PULLPIN,
+	HG_ANIMATION_THROW,
 	HG_ANIMATION_DEPLOY,
-    HG_ANIMATION_DRINK
+	HG_ANIMATION_DRINK
 };
 
 public CBasePlayerWeapon_SecondaryAttack_Post(weapon) {
@@ -528,12 +528,12 @@ public CBasePlayerWeapon_ItemPostFrame_Pre(weapon) {
 }
 
 stock SendWeaponAnimation(const id, const iAnimation) {
-    set_entvar(id, var_weaponanim, iAnimation);
+	set_entvar(id, var_weaponanim, iAnimation);
 
-    message_begin(MSG_ONE_UNRELIABLE, SVC_WEAPONANIM, .player = id);
-    write_byte(iAnimation);
-    write_byte(0);
-    message_end();
+	message_begin(MSG_ONE_UNRELIABLE, SVC_WEAPONANIM, .player = id);
+	write_byte(iAnimation);
+	write_byte(0);
+	message_end();
 }
 
 public CBasePlayer_ThrowGrenade_Pre(const id, const item, const Float:vecSrc[3], const Float:vecThrow[3], const Float:time, const const usEvent) {
@@ -992,6 +992,7 @@ bool:UserHasFlagsS(const UserId, const sFlags[], const bool:bStrict = false) {
 
 public plugin_natives() {
 	register_native("HealthNade_GiveNade", "_HealthNade_GiveNade");
+	register_native("HealthNade_HasNade", "_HealthNade_HasNade");
 }
 
 public _HealthNade_GiveNade() {
@@ -1003,4 +1004,16 @@ public _HealthNade_GiveNade() {
 	}
 
 	return NULLENT;
+}
+
+public _HealthNade_HasNade() {
+	enum { player = 1 };
+
+	new pPlayer = get_param(player);
+
+	if(!is_user_alive(pPlayer)) {
+		return false;
+	}
+
+	return bool:(get_member(pPlayer, m_rgAmmo, AMMO_ID));
 }
