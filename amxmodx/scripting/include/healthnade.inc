@@ -39,3 +39,12 @@ forward HealthNade_GetProp(const id, const iPropType, &any:PropValue, PropString
  * @return      HealthNade item index or HN_NULLENT if operation fails.
  */
 native HealthNade_GiveNade(const id);
+
+/**
+ * Checks if the player has HealthNade.
+ *
+ * @param id    Player`s index.
+ *
+ * @return      True if the player has a HealthNade, false otherwise.
+ */
+native HealthNade_HasNade(const id);
