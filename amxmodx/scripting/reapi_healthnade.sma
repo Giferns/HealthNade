@@ -52,9 +52,11 @@
 
 	0.0.15f (30.12.2023)
 		* Добавлен натив HealthNade_HasNade()
+	0.0.16f (30.12.2023)
+		* Добавлен натив IsPlayer_HealthNade()
 */
 
-new const PLUGIN_VERSION[] = "0.0.15f";
+new const PLUGIN_VERSION[] = "0.0.16f";
 
 #pragma semicolon 1
 
@@ -429,6 +431,14 @@ public Item_Deploy_Post(const item) {
 		other = get_member(other, m_pNext);
 	}
 }
+
+enum {
+    HG_ANIMATION_IDLE = 0,
+    HG_ANIMATION_PULLPIN,
+    HG_ANIMATION_THROW,
+	HG_ANIMATION_DEPLOY,
+    HG_ANIMATION_DRINK
+};
 
 public Item_Holster_Post(const item) {
 	new other = get_member(get_member(item, m_pPlayer), m_rgpPlayerItems, ITEM_SLOT);
@@ -1006,6 +1016,7 @@ bool:UserHasFlagsS(const UserId, const sFlags[], const bool:bStrict = false) {
 public plugin_natives() {
 	register_native("HealthNade_GiveNade", "_HealthNade_GiveNade");
 	register_native("HealthNade_HasNade", "_HealthNade_HasNade");
+	register_native("IsPlayer_HealthNade", "_IsPlayer_GiveNade");
 }
 
 public _HealthNade_GiveNade() {
@@ -1029,4 +1040,19 @@ public _HealthNade_HasNade() {
 	}
 
 	return bool:(get_member(pPlayer, m_rgAmmo, AMMO_ID));
+}
+
+public _IsPlayer_GiveNade() {
+	enum { player = 1 };
+	new pPlayer = get_param(player);
+
+	new Item = rg_get_player_item(pPlayer, ITEM_CLASSNAME, ITEM_SLOT);
+
+	if(is_user_alive(pPlayer)) {
+		if(Item != 0){
+			return true;
+		}
+	}
+
+	return false;
 }
