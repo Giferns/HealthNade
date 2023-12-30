@@ -47,4 +47,4 @@ native HealthNade_GiveNade(const id);
  *
  * @return      True if the player has a HealthNade, false otherwise.
  */
-native HealthNade_HasNade(const id);
+native bool:HealthNade_HasNade(const id);
