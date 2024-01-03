@@ -48,3 +48,13 @@ native HealthNade_GiveNade(const id);
  * @return      True if the player has a HealthNade, false otherwise.
  */
 native bool:HealthNade_HasNade(const id);
+
+
+/**
+ * Checks if the player has a HealthNade
+ *
+ * @param id    Player`s index.
+ *
+ * @return      true/false.
+ */
+native IsPlayer_HealthNade(const id);
