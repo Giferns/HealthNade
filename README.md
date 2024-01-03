@@ -62,5 +62,12 @@ HealthNade_SlotId "4"
 - **fantom** - за исходный плагин [Healthnade](https://dev-cs.ru/resources/992/);
 - **AnonymousAmx**, **MayroN**, **Psycrow** - за [модельку гранаты с анимацией](https://dev-cs.ru/threads/18355/);
 - **steelzzz**, **wopox1337** - за стоки эффектов.
-- **[RedFoxxx](https://dev-cs.ru/members/8560/)** - за перевод на английский язык, за квары HealthNade_ThrowHealingAmount_With_Flags и HealthNade_DrinkHealingAmount_With_Flags.
+
+- **[RedFoxxx](https://dev-cs.ru/members/8560/)**  - 
+1)[за перевод на английский язык] 
+2)[за квары HealthNade_ThrowHealingAmount_With_Flags и HealthNade_DrinkHealingAmount_With_Flags, HealthNade_Override_AccessFlags]
+3)[Добавил натив IsPlayer_HealthNade() ]
+4)[Добавил console command HealthNade ]
+
 - **[bizon](https://dev-cs.ru/members/4218/)** - за реализацию выпадения гранаты после смерти.
+- **[Nordic Warrior](https://dev-cs.ru/members/3093/)** - Добавил натив HealthNade_HasNade
