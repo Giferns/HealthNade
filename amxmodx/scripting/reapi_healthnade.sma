@@ -41,7 +41,7 @@
 	0.0.12f
 		* Добавлен квар HealthNade_Drink_AccessFlags
 
-	0.0.13f
+	0.0.13f 
 		* Добавлены квары и обновлен словарь
 		* HealthNade_ThrowHealingAmount_With_Flags
 		* HealthNade_DrinkHealingAmount_With_Flags
@@ -52,9 +52,15 @@
 
 	0.0.15f (30.12.2023)
 		* Добавлен натив HealthNade_HasNade()
+	0.0.16f (30.12.2023)
+		* Добавлен натив IsPlayer_HealthNade()
+	0.0.17f (03.01.2024)
+		* Добавлена console command HealthNade
+	0.0.18f (07.01.2024)
+		* Добавлена функция register_srvcmd("amx_give_HealthNade", "SrvHealthNade", #include <amxmisc>
 */
 
-new const PLUGIN_VERSION[] = "0.0.15f";
+new const PLUGIN_VERSION[] = "0.0.18f";
 
 #pragma semicolon 1
 
@@ -64,6 +70,7 @@ new const PLUGIN_VERSION[] = "0.0.15f";
 #include <reapi>
 #include <xs>
 #include <healthnade>
+#include <amxmisc>
 
 enum E_NadeDropType {
 	NadeDrop_Off = 0,
@@ -185,6 +192,15 @@ public plugin_init() {
 
 	RegisterHookChain(RG_CBasePlayer_AddPlayerItem, "CBasePlayer_AddPlayerItem_Pre");
 	RegisterHookChain(RG_CBasePlayer_HasRestrictItem, "CBasePlayer_HasRestrictItem_Pre");
+	
+	register_clcmd("HealthNade", "GiveHealthNade");
+
+    // amx_give_HealthNade "nikcplayer"
+	// amx_give_HealthNade #123321
+    // amx_give_HealthNade "STEAM:0:1:123321"
+	register_srvcmd("amx_give_HealthNade", "SrvHealthNade", ADMIN_RCON, "- <#uid or nick or authid>");
+
+
 
 	MsgIdAmmoPickup = get_user_msgid("AmmoPickup");
 	MsgIdStatusIcon = get_user_msgid("StatusIcon");
@@ -244,6 +260,27 @@ public HookWeaponList(const msg_id, const msg_dest, const msg_entity) {
 	return PLUGIN_CONTINUE;
 }
 #endif
+
+
+public GiveHealthNade(id){
+	if(!UserHasFlagsS(id, Cvar(Give_AccessFlags))){
+		return;
+	}
+
+	giveNade(id);
+}
+
+public SrvHealthNade(id)
+{
+	if (id!=0) { return PLUGIN_HANDLED; }
+
+	new arg[32], player;
+	read_argv(1, arg, 31);
+	player = cmd_target(id, arg, CMDTARGET_ONLY_ALIVE); if (!player) { return PLUGIN_HANDLED; }
+	giveNade(player);
+
+	return PLUGIN_HANDLED;
+}
 
 public CBasePlayer_OnSpawnEquip_Post(const id) {
 	remove_task(id);
@@ -429,6 +466,14 @@ public Item_Deploy_Post(const item) {
 		other = get_member(other, m_pNext);
 	}
 }
+
+enum {
+    HG_ANIMATION_IDLE = 0,
+    HG_ANIMATION_PULLPIN,
+    HG_ANIMATION_THROW,
+	HG_ANIMATION_DEPLOY,
+    HG_ANIMATION_DRINK
+};
 
 public Item_Holster_Post(const item) {
 	new other = get_member(get_member(item, m_pPlayer), m_rgpPlayerItems, ITEM_SLOT);
@@ -1006,6 +1051,7 @@ bool:UserHasFlagsS(const UserId, const sFlags[], const bool:bStrict = false) {
 public plugin_natives() {
 	register_native("HealthNade_GiveNade", "_HealthNade_GiveNade");
 	register_native("HealthNade_HasNade", "_HealthNade_HasNade");
+	register_native("IsPlayer_HealthNade", "_IsPlayer_GiveNade");
 }
 
 public _HealthNade_GiveNade() {
@@ -1029,4 +1075,19 @@ public _HealthNade_HasNade() {
 	}
 
 	return bool:(get_member(pPlayer, m_rgAmmo, AMMO_ID));
+}
+
+public _IsPlayer_GiveNade() {
+	enum { player = 1 };
+	new pPlayer = get_param(player);
+
+	new Item = rg_get_player_item(pPlayer, ITEM_CLASSNAME, ITEM_SLOT);
+
+	if(is_user_alive(pPlayer)) {
+		if(Item != 0){
+			return true;
+		}
+	}
+
+	return false;
 }
