@@ -65,9 +65,10 @@ HealthNade_SlotId "4"
 
 - **[RedFoxxx](https://dev-cs.ru/members/8560/)**  - 
 1)[за перевод на английский язык] 
-2)[за квары HealthNade_ThrowHealingAmount_With_Flags и HealthNade_DrinkHealingAmount_With_Flags, HealthNade_Override_AccessFlags]
+2)[за квары HealthNade_ThrowHealingAmount_With_Flags и HealthNade_DrinkHealingAmount_With_Flags, HealthNade_Override_AccessFlags и обновлен словарь]
 3)[Добавил натив IsPlayer_HealthNade() ]
 4)[Добавил console command HealthNade ]
+5)[Добавлена функция register_srvcmd("amx_give_HealthNade", "SrvHealthNade", и #include <amxmisc>]
 
 - **[bizon](https://dev-cs.ru/members/4218/)** - за реализацию выпадения гранаты после смерти.
 - **[Nordic Warrior](https://dev-cs.ru/members/3093/)** - Добавил натив HealthNade_HasNade
