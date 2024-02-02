@@ -150,7 +150,7 @@ public plugin_precache() {
 	SpriteShape = precache_model("sprites/reapi_healthnade/heal_shape.spr");
 	SpriteCylinder = precache_model("sprites/shockwave.spr");
 
-	precache_sound("weapons/reapi_healthnade/heal.wav");
+	precache_sound(SOUND_EXPLODE);
 
 #if WEAPON_NEW_ID != WEAPON_GLOCK
 	MsgIdWeaponList = get_user_msgid("WeaponList");
