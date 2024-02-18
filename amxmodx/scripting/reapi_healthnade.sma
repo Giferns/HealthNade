@@ -248,7 +248,7 @@ public HookWeaponList(const msg_id, const msg_dest, const msg_entity) {
 public CBasePlayer_OnSpawnEquip_Post(const id) {
 	remove_task(id);
 
-	if (!Cvar(Give) || !UserHasFlagsS(id, Cvar(Give_AccessFlags))) {
+	if (!Cvar(Give) || is_user_bot(id) || !UserHasFlagsS(id, Cvar(Give_AccessFlags))) {
 		return;
 	}
 
