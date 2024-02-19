@@ -52,9 +52,13 @@
 
 	0.0.15f (30.12.2023)
 		* Добавлен натив HealthNade_HasNade()
+	0.0.16f (19.02.2024)
+		* Добавлен отсев ботов в CBasePlayer_OnSpawnEquip_Post()
+			* https://github.com/Giferns/HealthNade/pull/13
+				* Спасибо https://github.com/anzz1
 */
 
-new const PLUGIN_VERSION[] = "0.0.15f";
+new const PLUGIN_VERSION[] = "0.0.16f";
 
 #pragma semicolon 1
 
