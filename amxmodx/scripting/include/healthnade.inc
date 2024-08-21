@@ -35,10 +35,12 @@ forward HealthNade_GetProp(const id, const iPropType, &any:PropValue, PropString
  * Give health nade with specified parameters to specified player.
  *
  * @param id    Player`s index.
+ * @param count     Count of health grenades to give
+ * @param maximum   Maximum number of health grenades player can have at once
  *
  * @return      HealthNade item index or HN_NULLENT if operation fails.
  */
-native HealthNade_GiveNade(const id);
+native HealthNade_GiveNade(const id, count = 1, maximum = 1);
 
 /**
  * Checks if the player has HealthNade.
