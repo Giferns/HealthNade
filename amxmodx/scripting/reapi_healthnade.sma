@@ -56,9 +56,14 @@
 		* Добавлен отсев ботов в CBasePlayer_OnSpawnEquip_Post()
 			* https://github.com/Giferns/HealthNade/pull/13
 				* Спасибо https://github.com/anzz1
+	0.0.17f (21.08.2024)
+		* В натив HealthNade_GiveNade добавлены аргументы count и maximum
+		* Квар HealthNade_Give теперь отвечает за кол-во выдаваемых гранат (0 - не выдавать)
+		* Улучшена логика для квара HealthNade_NadeDrop
+		* Заблокирована выдача ботам
 */
 
-new const PLUGIN_VERSION[] = "0.0.16f";
+new const PLUGIN_VERSION[] = "0.0.17f";
 
 #pragma semicolon 1
 
@@ -268,7 +273,7 @@ public CBasePlayer_OnSpawnEquip_Post(const id) {
 	}
 
 	if(!Cvar(EquipDelay)) {
-		giveNade(id);
+		giveNade(id, Cvar(Give), Cvar(Give));
 		return;
 	}
 
@@ -276,9 +281,8 @@ public CBasePlayer_OnSpawnEquip_Post(const id) {
 }
 
 public task_DelayedEquip(const id) {
-	if(is_user_alive(id)) {
-		giveNade(id);
-	}
+	new count = max(1, Cvar(Give));
+	giveNade(id, count, count);
 }
 
 public CBasePlayer_Killed_Pre(const id) {
@@ -330,6 +334,7 @@ public CBasePlayer_Killed_Pre(const id) {
 	SetThink(eEnt, "think_healthnade_drop");
 	set_entvar(eEnt, var_nextthink, get_gametime() + get_cvar_float("mp_item_staytime"));
 
+	set_entvar(eEnt, var_iuser4, get_member(id, m_rgAmmo, AMMO_ID));
 	SetTouch(eEnt, "touch_healthnade_drop");
 }
 
@@ -340,18 +345,30 @@ public think_healthnade_drop(const eEnt) {
 }
 
 public touch_healthnade_drop(const eEnt, const id) {
-	if (
-		is_nullent(eEnt)
-		|| !is_user_connected(id)
-		|| get_member(id, m_rgAmmo, AMMO_ID)
-	) {
+	if (is_nullent(eEnt) || !is_user_alive(id)) {
 		return;
+	}
+
+	new iWpAmmo = get_entvar(eEnt, var_iuser4);
+	new iToAdd = iWpAmmo;
+	new iPlayerAmmo = get_member(id, m_rgAmmo, AMMO_ID);
+
+	if(rg_get_player_item(id, ITEM_CLASSNAME, ITEM_SLOT)) {
+		if(iPlayerAmmo >= iWpAmmo) {
+			return;
+		}
+
+		iToAdd = iWpAmmo - iPlayerAmmo;
+	}
+
+	if(iPlayerAmmo) {
+		emit_sound(id, CHAN_ITEM, "items/gunpickup2.wav", VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
 	}
 
 	set_entvar(eEnt, var_nextthink, -1.0);
 	set_entvar(eEnt, var_flags, FL_KILLME);
 
-	giveNade(id);
+	giveNade(id, iToAdd, iWpAmmo);
 }
 
 public CmdSelect(const id) {
@@ -605,10 +622,14 @@ public GrenadeThink(const grenade) {
 	}
 }
 
-giveNade(const id) {
+giveNade(const id, count = 1, maximum = 1) {
+	if(!is_user_alive(id) || is_user_bot(id)) {
+		return NULLENT;
+	}
+
 	new item = rg_get_player_item(id, ITEM_CLASSNAME, ITEM_SLOT);
 	if (item != 0) {
-		giveAmmo(id, 1, AMMO_ID, 1);
+		giveAmmo(id, count, AMMO_ID, maximum);
 		return item;
 	}
 
@@ -654,6 +675,8 @@ giveNade(const id) {
 		set_entvar(item, var_flags, FL_KILLME);
 		return NULLENT;
 	}
+
+	set_member(id, m_rgAmmo, count, AMMO_ID);
 
 	return item;
 }
@@ -1013,14 +1036,8 @@ public plugin_natives() {
 }
 
 public _HealthNade_GiveNade() {
-	enum { player = 1 };
-	new pPlayer = get_param(player);
-
-	if(is_user_alive(pPlayer)) {
-		return giveNade(pPlayer);
-	}
-
-	return NULLENT;
+	enum { player = 1, count, maximum };
+	return giveNade(get_param(player), get_param(count), get_param(maximum));
 }
 
 public _HealthNade_HasNade() {
