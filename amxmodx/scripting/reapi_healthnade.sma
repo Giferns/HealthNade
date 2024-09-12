@@ -66,9 +66,11 @@
 			give_healthnade #%userid% кол-во
 				либо
 			give_healthnade %id% кол-во
+	0.0.19f (12.09.2024)
+		* Исправление положения функции srvcmd_GiveHealthnade
 */
 
-new const PLUGIN_VERSION[] = "0.0.18f";
+new const PLUGIN_VERSION[] = "0.0.19f";
 
 #pragma semicolon 1
 
