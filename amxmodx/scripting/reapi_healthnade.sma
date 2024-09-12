@@ -230,23 +230,6 @@ public RegUserMsg_Post(const name[]) {
 	}
 }
 
-public srvcmd_GiveHealthnade() {
-	enum { player = 1, count };
-
-	new szArg[32], pPlayer; read_argv(player, szArg, charsmax(szArg));
-
-	if(szArg[0] == '#') {
-		pPlayer = find_player("k", str_to_num(szArg[1]));
-	}
-	else {
-		pPlayer = str_to_num(szArg);
-	}
-
-	new iCount = max(1, read_argv_int(count));
-	giveNade(pPlayer, iCount, iCount);
-	return PLUGIN_HANDLED;
-}
-
 public HookWeaponList(const msg_id, const msg_dest, const msg_entity) {
 	enum {
 		arg_name = 1,
@@ -276,6 +259,23 @@ public HookWeaponList(const msg_id, const msg_dest, const msg_entity) {
 	return PLUGIN_CONTINUE;
 }
 #endif
+
+public srvcmd_GiveHealthnade() {
+	enum { player = 1, count };
+
+	new szArg[32], pPlayer; read_argv(player, szArg, charsmax(szArg));
+
+	if(szArg[0] == '#') {
+		pPlayer = find_player("k", str_to_num(szArg[1]));
+	}
+	else {
+		pPlayer = str_to_num(szArg);
+	}
+
+	new iCount = max(1, read_argv_int(count));
+	giveNade(pPlayer, iCount, iCount);
+	return PLUGIN_HANDLED;
+}
 
 public CBasePlayer_OnSpawnEquip_Post(const id) {
 	remove_task(id);
