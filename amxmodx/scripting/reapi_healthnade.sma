@@ -61,9 +61,14 @@
 		* Квар HealthNade_Give теперь отвечает за кол-во выдаваемых гранат (0 - не выдавать)
 		* Улучшена логика для квара HealthNade_NadeDrop
 		* Заблокирована выдача ботам
+	0.0.18f (12.09.2024)
+		* Добавлена консольная серверная команда для внешней выдачи, формат:
+			give_healthnade #%userid% кол-во
+				либо
+			give_healthnade %id% кол-во
 */
 
-new const PLUGIN_VERSION[] = "0.0.17f";
+new const PLUGIN_VERSION[] = "0.0.18f";
 
 #pragma semicolon 1
 
