@@ -61,9 +61,14 @@
 		* Квар HealthNade_Give теперь отвечает за кол-во выдаваемых гранат (0 - не выдавать)
 		* Улучшена логика для квара HealthNade_NadeDrop
 		* Заблокирована выдача ботам
+	0.0.18f (12.09.2024)
+		* Добавлена консольная серверная команда для внешней выдачи, формат:
+			give_healthnade #%userid% кол-во
+				либо
+			give_healthnade %id% кол-во
 */
 
-new const PLUGIN_VERSION[] = "0.0.17f";
+new const PLUGIN_VERSION[] = "0.0.18f";
 
 #pragma semicolon 1
 
@@ -172,6 +177,7 @@ public plugin_precache() {
 }
 
 public plugin_init() {
+	register_srvcmd("give_healthnade", "srvcmd_GiveHealthnade");
 	register_clcmd(WEAPON_NEW_NAME, "CmdSelect");
 
 	g_fwdCanEquip = CreateMultiForward("HealthNade_CanEquip", ET_STOP, FP_CELL);
@@ -222,6 +228,23 @@ public RegUserMsg_Post(const name[]) {
 		MsgIdWeaponList = get_orig_retval();
 		MsgHookWeaponList = register_message(MsgIdWeaponList, "HookWeaponList");
 	}
+}
+
+public srvcmd_GiveHealthnade() {
+	enum { player = 1, count };
+
+	new szArg[32], pPlayer; read_argv(player, szArg, charsmax(szArg));
+
+	if(szArg[0] == '#') {
+		pPlayer = find_player("k", str_to_num(szArg[1]));
+	}
+	else {
+		pPlayer = str_to_num(szArg);
+	}
+
+	new iCount = max(1, read_argv_int(count));
+	giveNade(pPlayer, iCount, iCount);
+	return PLUGIN_HANDLED;
 }
 
 public HookWeaponList(const msg_id, const msg_dest, const msg_entity) {
