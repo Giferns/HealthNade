@@ -172,6 +172,7 @@ public plugin_precache() {
 }
 
 public plugin_init() {
+	register_srvcmd("give_healthnade", "srvcmd_GiveHealthnade");
 	register_clcmd(WEAPON_NEW_NAME, "CmdSelect");
 
 	g_fwdCanEquip = CreateMultiForward("HealthNade_CanEquip", ET_STOP, FP_CELL);
@@ -222,6 +223,23 @@ public RegUserMsg_Post(const name[]) {
 		MsgIdWeaponList = get_orig_retval();
 		MsgHookWeaponList = register_message(MsgIdWeaponList, "HookWeaponList");
 	}
+}
+
+public srvcmd_GiveHealthnade() {
+	enum { player = 1, count };
+
+	new szArg[32], pPlayer; read_argv(player, szArg, charsmax(szArg));
+
+	if(szArg[0] == '#') {
+		pPlayer = find_player("k", str_to_num(szArg[1]));
+	}
+	else {
+		pPlayer = str_to_num(szArg);
+	}
+
+	new iCount = max(1, read_argv_int(count));
+	giveNade(pPlayer, iCount, iCount);
+	return PLUGIN_HANDLED;
 }
 
 public HookWeaponList(const msg_id, const msg_dest, const msg_entity) {
