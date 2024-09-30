@@ -68,9 +68,12 @@
 			give_healthnade %id% кол-во
 	0.0.19f (12.09.2024)
 		* Исправление положения функции srvcmd_GiveHealthnade
+	0.0.20f (30.09.2024)
+		* Конфиг переведён на константный (больше не создаётся автоматически)
+		* Пути к моделям переведены с констант на квары
 */
 
-new const PLUGIN_VERSION[] = "0.0.19f";
+new const PLUGIN_VERSION[] = "0.0.20f";
 
 #pragma semicolon 1
 
