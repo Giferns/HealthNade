@@ -75,6 +75,7 @@ new const PLUGIN_VERSION[] = "0.0.19f";
 #pragma semicolon 1
 
 #include <amxmodx>
+#include <amxmisc>
 #include <fakemeta>
 #include <hamsandwich>
 #include <reapi>
@@ -108,6 +109,7 @@ enum E_Cvars {
 new gCvars[E_Cvars];
 #define Cvar(%1) gCvars[Cvar_%1]
 
+new const CFG_FILENAME[] = "plugins/HealthNade.cfg"; // comment to disable .cfg loading
 new const DICTIONARY_FILENAME[] = "HealthNade.ini";
 
 #define LangS(%1) fmt("%l", %1)
@@ -150,6 +152,12 @@ public plugin_precache() {
 	register_dictionary(DICTIONARY_FILENAME);
 
 	InitCvars();
+#if defined CFG_FILENAME
+	new szPath[240];
+	get_configsdir(szPath, charsmax(szPath));
+	server_cmd("exec %s/%s", CFG_FILENAME);
+	server_exec();
+#endif
 
 	precache_generic("sprites/reapi_healthnade/weapon_healthnade.txt");
 	precache_generic("sprites/reapi_healthnade/640hud128.spr");
@@ -908,8 +916,6 @@ InitCvars() {
 		LangS("HEALTHNADE_CVAR_SLOT_ID"),
 		true, 1.0, true, 5.0
 	), Cvar(SlotId));
-
-	AutoExecConfig(true, "HealthNade");
 
 	bind_pcvar_num(get_cvar_pointer("mp_nadedrops"), g_iCvarNadeDrops);
 }
