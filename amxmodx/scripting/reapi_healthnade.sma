@@ -105,6 +105,9 @@ enum E_Cvars {
 	bool:Cvar_Msg_UsageHint,
 	E_NadeDropType:Cvar_NadeDrop,
 	InventorySlotType:Cvar_SlotId,
+	Cvar_ViewModel[96],
+	Cvar_PlayerModel[96],
+	Cvar_WorldModel[96]
 }
 new gCvars[E_Cvars];
 #define Cvar(%1) gCvars[Cvar_%1]
@@ -125,9 +128,6 @@ new const GRENADE_CLASSNAME[] = "healthnade";
 const AMMO_ID = 16;
 const InventorySlotType:ITEM_SLOT = GRENADE_SLOT;
 
-new const VIEWMODEL[] = "models/reapi_healthnade/v_drink9.mdl";
-new const WEAPONMODEL[] = "models/reapi_healthnade/p_healthnade.mdl";
-new const WORLDMODEL[] = "models/reapi_healthnade/w_healthnade.mdl";
 new const SOUND_PULLPIN[] = "weapons/holywater_pinpul.wav";
 new const SOUND_DEPLOY[] = "weapons/holywater_deploy.wav";
 new const SOUND_DRINK[] = "weapons/holywater_drink.wav";
@@ -155,16 +155,16 @@ public plugin_precache() {
 #if defined CFG_FILENAME
 	new szPath[240];
 	get_configsdir(szPath, charsmax(szPath));
-	server_cmd("exec %s/%s", CFG_FILENAME);
+	server_cmd("exec %s/%s", szPath, CFG_FILENAME);
 	server_exec();
 #endif
 
 	precache_generic("sprites/reapi_healthnade/weapon_healthnade.txt");
 	precache_generic("sprites/reapi_healthnade/640hud128.spr");
 
-	precache_model(VIEWMODEL);
-	precache_model(WEAPONMODEL);
-	precache_model(WORLDMODEL);
+	precache_model(Cvar(ViewModel));
+	precache_model(Cvar(PlayerModel));
+	precache_model(Cvar(WorldModel));
 
 	precache_sound(SOUND_PULLPIN);
 	precache_sound(SOUND_DEPLOY);
@@ -360,7 +360,7 @@ public CBasePlayer_Killed_Pre(const id) {
 	engfunc(EngFunc_SetOrigin, eEnt, fOrigin);
 	set_entvar(eEnt, var_movetype, MOVETYPE_TOSS);
 	set_entvar(eEnt, var_solid, SOLID_TRIGGER);
-	engfunc(EngFunc_SetModel, eEnt, WORLDMODEL);
+	engfunc(EngFunc_SetModel, eEnt, Cvar(WorldModel));
 	engfunc(EngFunc_SetSize, eEnt, Float:{-6.0, -6.0, -1.0}, Float:{6.0, 6.0, 1.0});
 
 	set_entvar(eEnt, var_velocity, fVelocity);
@@ -445,8 +445,8 @@ public CBasePlayerWeapon_DefaultDeploy_Pre(const item, const szViewModel[], cons
 	new UserId = get_member(item, m_pPlayer);
 
 	if (FClassnameIs(item, ITEM_CLASSNAME)) {
-		SetHookChainArg(2, ATYPE_STRING, VIEWMODEL);
-		SetHookChainArg(3, ATYPE_STRING, WEAPONMODEL);
+		SetHookChainArg(2, ATYPE_STRING, Cvar(ViewModel));
+		SetHookChainArg(3, ATYPE_STRING, Cvar(PlayerModel));
 
 		if (Cvar(Msg_UsageHint)) {
 			client_print(UserId, print_center, "%L", UserId, "HEALTHNADE_USAGE_HINT");
@@ -764,7 +764,7 @@ throwNade(const id, const item, const Float:vecSrc[3], const Float:vecThrow[3], 
 	set_entvar(grenade, var_framerate, 1.0);
 	set_entvar(grenade, var_gravity, 0.5);
 	set_entvar(grenade, var_friction, 0.8);
-	engfunc(EngFunc_SetModel, grenade, WORLDMODEL);
+	engfunc(EngFunc_SetModel, grenade, Cvar(WorldModel));
 
 	copy_entvar(item, grenade, var_HealthNade_Radius);
 	copy_entvar(item, grenade, var_HealthNade_ThrowHealingAmount);
@@ -916,6 +916,21 @@ InitCvars() {
 		LangS("HEALTHNADE_CVAR_SLOT_ID"),
 		true, 1.0, true, 5.0
 	), Cvar(SlotId));
+	
+	bind_pcvar_string(create_cvar(
+		"HealthNade_ViewModel", "", FCVAR_NONE,
+		"1st person model (v_)"
+	), Cvar(ViewModel), charsmax(Cvar(ViewModel)));
+	
+	bind_pcvar_string(create_cvar(
+		"HealthNade_PlayerModel", "", FCVAR_NONE,
+		"3rd person model (p_)"
+	), Cvar(PlayerModel), charsmax(Cvar(PlayerModel)));
+	
+	bind_pcvar_string(create_cvar(
+		"HealthNade_WorldModel", "", FCVAR_NONE,
+		"World model (w_)"
+	), Cvar(WorldModel), charsmax(Cvar(WorldModel)));
 
 	bind_pcvar_num(get_cvar_pointer("mp_nadedrops"), g_iCvarNadeDrops);
 }
