@@ -617,7 +617,7 @@ public CBasePlayer_ThrowGrenade_Pre(const id, const item, const Float:vecSrc[3],
 }
 
 public CBasePlayer_AddPlayerItem_Pre(const id, const item) {
-	if(!Cvar(ReplaceSmokegren) || is_nullent(item) || get_member(item, m_iId) != WEAPON_SMOKEGRENADE || !is_user_alive(id)) {
+	if(!Cvar(ReplaceSmokegren) || is_nullent(item) || get_member(item, m_iId) != WEAPON_ID || !is_user_alive(id)) {
 		return HC_CONTINUE;
 	}
 
@@ -634,7 +634,7 @@ public CBasePlayer_HasRestrictItem_Pre(id, ItemID:item, ItemRestType:rest_type) 
 		return HC_CONTINUE;
 	}
 
-	if(item ==ITEM_SMOKEGRENADE && rg_get_player_item(id, ITEM_CLASSNAME, ITEM_SLOT)) {
+	if(item == ItemID:WEAPON_ID && rg_get_player_item(id, ITEM_CLASSNAME, ITEM_SLOT)) {
 		if(rest_type == ITEM_TYPE_BUYING) {
 			client_print(id, print_center, "#Cstrike_TitlesTXT_Cannot_Carry_Anymore");
 		}
