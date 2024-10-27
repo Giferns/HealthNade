@@ -676,6 +676,12 @@ giveNade(const id, count = 1, maximum = 1) {
 		return NULLENT;
 	}
 
+	new iWeaponInfiniteIds = get_member(id, m_iWeaponInfiniteIds);
+	
+	if (get_cvar_num("mp_infinite_ammo") == 2) {
+		set_member(id, m_iWeaponInfiniteIds, iWeaponInfiniteIds > 0 ? (iWeaponInfiniteIds & ~(1<<_:WEAPON_NEW_ID)) : CSW_ALL_GUNS & ~(1<<_:WEAPON_NEW_ID));
+	}
+
 	new Float:origin[3];
 	get_entvar(id, var_origin, origin);
 	set_entvar(item, var_origin, origin);
@@ -699,6 +705,8 @@ giveNade(const id, count = 1, maximum = 1) {
 	dllfunc(DLLFunc_Spawn, item);
 
 	set_member(item, m_iId, WEAPON_NEW_ID);
+	
+	rg_set_iteminfo(item, ItemInfo_iMaxClip, -1);
 
 	rg_set_iteminfo(item, ItemInfo_pszName, WEAPON_NEW_NAME);
 	rg_set_iteminfo(item, ItemInfo_pszAmmo1, AMMO_NAME);
