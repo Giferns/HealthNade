@@ -73,9 +73,11 @@
 		* Пути к моделям переведены с констант на квары
 	0.0.21f (17.10.2024)
 		* Избавление от хардкода WEAPON_SMOKEGRENADE
+	0.0.22f (27.10.2024):
+		* Добавлена поддержка mp_infinite_ammo 1/2
 */
 
-new const PLUGIN_VERSION[] = "0.0.21f";
+new const PLUGIN_VERSION[] = "0.0.22f";
 
 #pragma semicolon 1
 
