@@ -22,7 +22,6 @@ HealthNade_ExplodeRadius "300.0"
 // Default: "20.0"
 HealthNade_ThrowHealingAmount "20.0"
 
-
 // Количество ХП, восполняемое от взрыва гранаты. (Для игроков с флагом доступа)
 //
 // The number of HP replenished from the grenade explosion. (For players with an access flag)
@@ -43,7 +42,6 @@ HealthNade_DrinkHealingAmount "35.0"
 // -
 // Default: "60.0"
 HealthNade_DrinkHealingAmount_With_Flags "60.0"
-
 
 // Сколько гранат выдавать при появлении.
 //
