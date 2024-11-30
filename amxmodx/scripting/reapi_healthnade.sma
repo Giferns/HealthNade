@@ -75,9 +75,13 @@
 		* Избавление от хардкода WEAPON_SMOKEGRENADE
 	0.0.22f (27.10.2024):
 		* Добавлена поддержка mp_infinite_ammo 1/2
+	0.0.23f (21.11.2024):
+		* Добавлен плагин экипировки по услугам GameCMS
+	0.0.24f (30.11.2024):
+		* Бамп версии
 */
 
-new const PLUGIN_VERSION[] = "0.0.22f";
+new const PLUGIN_VERSION[] = "0.0.24f";
 
 #pragma semicolon 1
 
