@@ -4,7 +4,7 @@
 
 ## Настройки
 
-Файл настроек: `amxmodx/configs/plugins/HealthNade.cfg`.
+Файл настроек: `amxmodx/configs/plugins/HealthNade.cfg`
 
 ```
 // Радиус взрыва гранаты.
