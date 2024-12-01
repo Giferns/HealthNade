@@ -79,9 +79,11 @@
 		* Добавлен плагин экипировки по услугам GameCMS
 	0.0.24f (30.11.2024):
 		* Бамп версии
+	0.0.25f (01.11.2024):
+		* Добавлен квар HealthNade_BaseWeapon (возможность переопределить оружие-основу)
 */
 
-new const PLUGIN_VERSION[] = "0.0.24f";
+new const PLUGIN_VERSION[] = "0.0.25f";
 
 #pragma semicolon 1
 
@@ -118,7 +120,8 @@ enum E_Cvars {
 	InventorySlotType:Cvar_SlotId,
 	Cvar_ViewModel[96],
 	Cvar_PlayerModel[96],
-	Cvar_WorldModel[96]
+	Cvar_WorldModel[96],
+	Cvar_BaseWeapon[32]
 }
 new gCvars[E_Cvars];
 #define Cvar(%1) gCvars[Cvar_%1]
@@ -128,10 +131,8 @@ new const DICTIONARY_FILENAME[] = "HealthNade.ini";
 
 #define LangS(%1) fmt("%l", %1)
 
-const WeaponIdType:WEAPON_ID = WEAPON_SMOKEGRENADE;
 const WeaponIdType:WEAPON_NEW_ID = WEAPON_GLOCK;
 const WeaponIdType:WEAPON_FAKE_ID = WeaponIdType:75;
-new const WEAPON_NAME[] = "weapon_smokegrenade";
 new const AMMO_NAME[] = "HealthNade";
 new const WEAPON_NEW_NAME[] = "reapi_healthnade/weapon_healthnade";
 new const ITEM_CLASSNAME[] = "weapon_healthnade";
@@ -157,6 +158,7 @@ new FwdRegUserMsg, MsgHookWeaponList;
 #endif
 new g_iCvarNadeDrops;
 new g_fwdCanEquip, g_fwdGetProp, g_PropString[MAX_PROP_STRING_LEN];
+new WeaponIdType:g_iWeaponID;
 
 public plugin_precache() {
 	register_plugin("[ReAPI] Healthnade", PLUGIN_VERSION, "DEV-CS.RU Community");
@@ -169,6 +171,8 @@ public plugin_precache() {
 	server_cmd("exec %s/%s", szPath, CFG_FILENAME);
 	server_exec();
 #endif
+
+	g_iWeaponID = rg_get_weapon_info(Cvar(BaseWeapon), WI_ID);
 
 	precache_generic("sprites/reapi_healthnade/weapon_healthnade.txt");
 	precache_generic("sprites/reapi_healthnade/640hud128.spr");
@@ -211,11 +215,11 @@ public plugin_init() {
 	RegisterHookChain(RG_CBasePlayer_GiveAmmo, "CBasePlayer_GiveAmmo_Pre", false);
 	RegisterHookChain(RG_CBasePlayerWeapon_DefaultDeploy, "CBasePlayerWeapon_DefaultDeploy_Pre", false);
 
-	RegisterHam(Ham_Item_Deploy, WEAPON_NAME, "Item_Deploy_Post", true);
-	RegisterHam(Ham_Item_Holster, WEAPON_NAME, "Item_Holster_Post", true);
+	RegisterHam(Ham_Item_Deploy, Cvar(BaseWeapon), "Item_Deploy_Post", true);
+	RegisterHam(Ham_Item_Holster, Cvar(BaseWeapon), "Item_Holster_Post", true);
 
-	RegisterHam(Ham_Weapon_SecondaryAttack, WEAPON_NAME, "CBasePlayerWeapon_SecondaryAttack_Post", true);
-	RegisterHam(Ham_Item_PostFrame, WEAPON_NAME, "CBasePlayerWeapon_ItemPostFrame_Pre");
+	RegisterHam(Ham_Weapon_SecondaryAttack, Cvar(BaseWeapon), "CBasePlayerWeapon_SecondaryAttack_Post", true);
+	RegisterHam(Ham_Item_PostFrame, Cvar(BaseWeapon), "CBasePlayerWeapon_ItemPostFrame_Pre");
 
 	RegisterHookChain(RG_CBasePlayer_ThrowGrenade, "CBasePlayer_ThrowGrenade_Pre", false);
 
@@ -465,7 +469,7 @@ public CBasePlayerWeapon_DefaultDeploy_Pre(const item, const szViewModel[], cons
 	}
 
 	new WeaponIdType:wid = WeaponIdType:rg_get_iteminfo(item, ItemInfo_iId);
-	if (wid != WEAPON_ID && wid != WEAPON_FAKE_ID) {
+	if (wid != g_iWeaponID && wid != WEAPON_FAKE_ID) {
 		return HC_CONTINUE;
 	}
 
@@ -474,7 +478,7 @@ public CBasePlayerWeapon_DefaultDeploy_Pre(const item, const szViewModel[], cons
 		return HC_CONTINUE;
 	}
 
-	if (WeaponIdType:rg_get_iteminfo(lastItem, ItemInfo_iId) == WEAPON_ID) {
+	if (WeaponIdType:rg_get_iteminfo(lastItem, ItemInfo_iId) == g_iWeaponID) {
 		SetHookChainArg(6, ATYPE_INTEGER, 0);
 	}
 
@@ -483,12 +487,12 @@ public CBasePlayerWeapon_DefaultDeploy_Pre(const item, const szViewModel[], cons
 
 public Item_Deploy_Post(const item) {
 	if (WeaponIdType:rg_get_iteminfo(item, ItemInfo_iId) == WEAPON_FAKE_ID) {
-		rg_set_iteminfo(item, ItemInfo_iId, WEAPON_ID);
+		rg_set_iteminfo(item, ItemInfo_iId, g_iWeaponID);
 	}
 
 	new other = get_member(get_member(item, m_pPlayer), m_rgpPlayerItems, ITEM_SLOT);
 	while (!is_nullent(other)) {
-		if (item != other && WeaponIdType:rg_get_iteminfo(other, ItemInfo_iId) == WEAPON_ID) {
+		if (item != other && WeaponIdType:rg_get_iteminfo(other, ItemInfo_iId) == g_iWeaponID) {
 			rg_set_iteminfo(other, ItemInfo_iId, WEAPON_FAKE_ID);
 		}
 		other = get_member(other, m_pNext);
@@ -499,7 +503,7 @@ public Item_Holster_Post(const item) {
 	new other = get_member(get_member(item, m_pPlayer), m_rgpPlayerItems, ITEM_SLOT);
 	while (!is_nullent(other)) {
 		if (item != other && WeaponIdType:rg_get_iteminfo(other, ItemInfo_iId) == WEAPON_FAKE_ID) {
-			rg_set_iteminfo(other, ItemInfo_iId, WEAPON_ID);
+			rg_set_iteminfo(other, ItemInfo_iId, g_iWeaponID);
 		}
 		other = get_member(other, m_pNext);
 	}
@@ -625,7 +629,7 @@ public CBasePlayer_ThrowGrenade_Pre(const id, const item, const Float:vecSrc[3],
 }
 
 public CBasePlayer_AddPlayerItem_Pre(const id, const item) {
-	if(!Cvar(ReplaceSmokegren) || is_nullent(item) || get_member(item, m_iId) != WEAPON_ID || !is_user_alive(id)) {
+	if(!Cvar(ReplaceSmokegren) || is_nullent(item) || get_member(item, m_iId) != g_iWeaponID || !is_user_alive(id)) {
 		return HC_CONTINUE;
 	}
 
@@ -642,7 +646,7 @@ public CBasePlayer_HasRestrictItem_Pre(id, ItemID:item, ItemRestType:rest_type) 
 		return HC_CONTINUE;
 	}
 
-	if(item == ItemID:WEAPON_ID && rg_get_player_item(id, ITEM_CLASSNAME, ITEM_SLOT)) {
+	if(item == ItemID:g_iWeaponID && rg_get_player_item(id, ITEM_CLASSNAME, ITEM_SLOT)) {
 		if(rest_type == ITEM_TYPE_BUYING) {
 			client_print(id, print_center, "#Cstrike_TitlesTXT_Cannot_Carry_Anymore");
 		}
@@ -677,7 +681,7 @@ giveNade(const id, count = 1, maximum = 1) {
 		return item;
 	}
 
-	item = rg_create_entity(WEAPON_NAME, false);
+	item = rg_create_entity(Cvar(BaseWeapon), false);
 	if (is_nullent(item)) {
 		return NULLENT;
 	}
@@ -937,19 +941,24 @@ InitCvars() {
 	), Cvar(SlotId));
 	
 	bind_pcvar_string(create_cvar(
-		"HealthNade_ViewModel", "", FCVAR_NONE,
+		"HealthNade_ViewModel", "models/reapi_healthnade/v_drink9.mdl", FCVAR_NONE,
 		"1st person model (v_)"
 	), Cvar(ViewModel), charsmax(Cvar(ViewModel)));
 	
 	bind_pcvar_string(create_cvar(
-		"HealthNade_PlayerModel", "", FCVAR_NONE,
+		"HealthNade_PlayerModel", "models/reapi_healthnade/p_healthnade.mdl", FCVAR_NONE,
 		"3rd person model (p_)"
 	), Cvar(PlayerModel), charsmax(Cvar(PlayerModel)));
 	
 	bind_pcvar_string(create_cvar(
-		"HealthNade_WorldModel", "", FCVAR_NONE,
+		"HealthNade_WorldModel", "models/reapi_healthnade/w_healthnade.mdl", FCVAR_NONE,
 		"World model (w_)"
 	), Cvar(WorldModel), charsmax(Cvar(WorldModel)));
+	
+	bind_pcvar_string(create_cvar(
+		"HealthNade_BaseWeapon", "weapon_smokegrenade", FCVAR_NONE,
+		"Base weapon"
+	), Cvar(BaseWeapon), charsmax(Cvar(BaseWeapon)));
 
 	bind_pcvar_num(get_cvar_pointer("mp_nadedrops"), g_iCvarNadeDrops);
 }
