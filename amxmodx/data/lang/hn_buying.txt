@@ -1,0 +1,25 @@
+[ru]
+HN_BUY_NO_DISABLED = ^3* ^1В данный момент функция покупки отключена.
+HN_BUY_NO_ACCESS = ^3* ^1У вас нет доступа к данной функции.
+HN_BUY_DEAD = ^3* ^1Вы мертвы и не можете совершать покупки.
+HN_BUY_MIN_ROUND = ^3* ^4Лечебную гранату ^1можно купить только с^3 %d ^1раунда (сейчас^3 %d ^1раунд).
+HN_BUY_FREQ_WAIT = ^3* ^1Вы недавно покупали гранату. Следующая покупка возможна через^3 %d ^1раунд(ов).
+HN_BUY_ALREADY_HAVE = ^3* ^1У вас уже есть ^4лечебная граната^1.
+HN_BUY_NO_MONEY = ^3* ^1Недостаточно денег. Стоимость: ^4$%d ^1(не хватает ^3$%d^1).
+HN_BUY_OBEY_BUYZONE = ^3* ^1Данная функция доступна только в зоне покупки.
+HN_BUY_OBEY_BUYTIME = ^3* ^1Время на покупку истекло.
+HN_BUY_SUCCESS = ^3* ^1Вы успешно купили ^4лечебную гранату ^1за ^4$%d^1.
+HN_BUY_FAILED = ^3* ^1Не удалось выдать гранату (внутренняя ошибка).
+
+[en]
+HN_BUY_NO_DISABLED = ^3* ^1The purchase feature is currently disabled.
+HN_BUY_NO_ACCESS = ^3* ^1You do not have access to this feature.
+HN_BUY_DEAD = ^3* ^1You are dead and cannot buy.
+HN_BUY_MIN_ROUND = ^3* ^1You can buy^4 Health Nade ^1only from round^3 %d ^1(current round is^3 %d^1).
+HN_BUY_FREQ_WAIT = ^3* ^1You recently bought a grenade. Next purchase is available in^3 %d ^1round(s).
+HN_BUY_ALREADY_HAVE = ^3* ^1You already have a ^4Health Nade^1.
+HN_BUY_NO_MONEY = ^3* ^1Not enough money. Cost: ^4$%d ^1(you need ^3$%d^1).
+HN_BUY_OBEY_BUYZONE = ^3* ^1This feature is available only in the buy zone.
+HN_BUY_OBEY_BUYTIME = ^3* ^1The time for the purchase has expired.
+HN_BUY_SUCCESS = ^3* ^1You successfully bought ^4Health Nade ^1for ^4$%d^1.
+HN_BUY_FAILED = ^3* ^1Failed to give the grenade (internal error).
